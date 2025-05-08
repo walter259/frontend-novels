@@ -24,6 +24,9 @@ import LogoutButton from "../LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/service/auth/authService";
+import { Button } from "../ui/button";
+import ModeToggle from "../ModeToggle";
+
 
 export default function Navbar() {
   const { user, isAuthenticated } = useAuth();
@@ -78,10 +81,10 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
                   <DropdownMenuItem>
-                    <Link href="/account" className="w-full">Perfil</Link>
+                    <ModeToggle/>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <span>Billing</span>
+                  <Link href="/account" className="w-full">Perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <LogoutButton />
@@ -89,9 +92,11 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/login" className="p-2 block text-blue-500">
+              <Button asChild className="flex self-center">
+                <Link href="/login" >
                 Iniciar Sesión
               </Link>
+              </Button>
             )}
           </SidebarMenuItem>
         </SidebarMenu>

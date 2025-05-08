@@ -5,12 +5,14 @@ import type React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import RegisterForm from "./components/RegisterForm";
+import { ArrowLeft } from "lucide-react";
 
 export default function Register() {
   return (
     <div className="w-full max-w-md mx-auto h-screen flex flex-col justify-center  ">
       <div className="text-center mb-6">
-        <h1 className="text-xl font-bold">JB Audio Novelas</h1>
+        <h1 className="text-xl font-bold">
+        <Link href="/login"><ArrowLeft/></Link>JB Audio Novelas</h1>
         <p className="text-sm mt-1">Crea una cuenta</p>
       </div>
 
