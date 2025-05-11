@@ -52,7 +52,7 @@ export default function Navbar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>CRUD v2</SidebarGroupLabel>
+          <SidebarGroupLabel></SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <NavLinks />
@@ -84,7 +84,7 @@ export default function Navbar() {
                     <ModeToggle/>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                  <Link href="/account" className="w-full">Perfil</Link>
+                  <Link href="/account" className="w-full text-center">Perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <LogoutButton />

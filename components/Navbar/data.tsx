@@ -11,13 +11,20 @@ export default function useNavigationData() {
       },
       {
         id: 2,
-        title: "Productos",
+        title: "Explorar",
         link: "/product",
         icon: Package, 
       },
       {
         id: 3,
         title: "Categorias",
+        link: "/category",
+        icon: Folder,
+      },
+
+      {
+        id: 4,
+        title: "Biblioteca",
         link: "/category",
         icon: Folder,
       },

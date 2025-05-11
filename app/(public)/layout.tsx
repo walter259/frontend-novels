@@ -28,7 +28,7 @@ export default function PublicLayout({
   return (
     
     <div
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex w-full`}
       >
         <Providers>
           <Navbar />
