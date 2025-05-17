@@ -37,7 +37,7 @@ const novelsSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    removeNovel(state, action: PayloadAction<string>) {
+    removeNovel(state, action: PayloadAction<number>) {
       state.novels = state.novels.filter((novel) => novel.id !== action.payload);
       state.loading = false;
       state.error = null;

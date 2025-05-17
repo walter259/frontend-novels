@@ -25,7 +25,7 @@ export default function useNavigationData() {
       {
         id: 4,
         title: "Biblioteca",
-        link: "/category",
+        link: "/favorites",
         icon: Folder,
       },
   ],[]);

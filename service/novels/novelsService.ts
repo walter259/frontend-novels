@@ -1,5 +1,5 @@
+import { addNovel, removeNovel, setError, setLoading, setNovels, updateNovels } from "@/store/slices/novelsSlice";
 import api from "../api";
-import { setNovels, addNovel, updateNovels  , removeNovel, setLoading, setError } from "@/store/slices/novelsSlice";
 import { AppDispatch } from "@/store/store";
 
 interface NovelsResponse {
@@ -86,7 +86,7 @@ export const updateNovelAsync = (id: string, data: UpdateNovelData) => async (di
   }
 };
 
-export const deleteNovelAsync = (id: string) => async (dispatch: AppDispatch) => {
+export const deleteNovelAsync = (id: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
     await api.delete(`/novels/${id}`);

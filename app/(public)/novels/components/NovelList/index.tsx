@@ -4,16 +4,19 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getNovelsAsync } from "@/service/novels/novelsService";
+import { getFavoritesAsync } from "@/service/favorites/favoritesService";
 import { RootState, AppDispatch } from "@/store/store";
 import CardNovel from "../CardNovel";
 
 interface NovelListProps {
-  novels: Novel[]; // Nueva prop para recibir novelas filtradas
+  novels: Novel[]; // Prop para recibir novelas filtradas
 }
 
 export default function NovelList({ novels }: NovelListProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error } = useSelector((state: RootState) => state.novels);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { favorites, loading: favoritesLoading } = useSelector((state: RootState) => state.favorites);
 
   useEffect(() => {
     // Carga las novelas al montar el componente solo si no se pasan novelas como prop
@@ -21,6 +24,13 @@ export default function NovelList({ novels }: NovelListProps) {
       dispatch(getNovelsAsync());
     }
   }, [dispatch, novels, loading]);
+
+  // Cargar favoritos cuando el usuario está autenticado
+  useEffect(() => {
+    if (isAuthenticated && !favoritesLoading && favorites.length === 0) {
+      dispatch(getFavoritesAsync());
+    }
+  }, [dispatch, isAuthenticated, favoritesLoading, favorites.length]);
 
   if (loading) {
     return <div className="text-center p-4">Loading...</div>;

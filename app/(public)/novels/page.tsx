@@ -1,16 +1,31 @@
+// pages/novels/page.tsx
 "use client"
-import React from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
 import SearchNovel from "./SearchNovel";
-
+import { getNovelsAsync } from "@/service/novels/novelsService";
+import { getFavoritesAsync } from "@/service/favorites/favoritesService";
 
 export default function Novels() {
+  const dispatch = useDispatch<AppDispatch>();
   const novels = useSelector((state: RootState) => state.novels.novels);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  
+  useEffect(() => {
+    // Cargar novelas si aún no están cargadas
+    if (novels.length === 0) {
+      dispatch(getNovelsAsync());
+    }
+    
+    // Cargar favoritos si el usuario está autenticado
+    if (isAuthenticated) {
+      dispatch(getFavoritesAsync());
+    }
+  }, [dispatch, novels.length, isAuthenticated]);
 
   return (
     <div className="w-full">
-      <h1 className="text-center text-3xl font-bold mb-6">Novels</h1>
       <SearchNovel initialNovels={novels} />
     </div>
   );

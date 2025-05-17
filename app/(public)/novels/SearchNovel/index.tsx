@@ -47,7 +47,7 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
       </div>
 
       {/* Botones de categorías */}
-      <div className="mb-6 flex flex-wrap justify-center gap-2">
+      <div className="mb-6 hidden md:flex flex-wrap justify-center gap-2">
         {categories.map((category) => (
           <Button
             key={category}
