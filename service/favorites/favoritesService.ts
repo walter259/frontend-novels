@@ -30,7 +30,7 @@ export const getFavoritesAsync = () => async (dispatch: AppDispatch) => {
 export const addFavoriteAsync = (novelId: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
-    const response = await api.post<AddFavoriteResponse>("/favorites", { novel_id: novelId });
+    const response = await api.post<AddFavoriteResponse>(`/novels/${novelId}/favorites`);
     const favorite = response.data.favorite;
     dispatch(addFavorite(favorite));
     return favorite;

@@ -1,4 +1,7 @@
-// components/CardNovel.tsx
+// Componente de tarjeta para mostrar información de una novela
+// Muestra portada, título, categoría, descripción y botones de acción
+// Permite añadir la novela a la estantería (favoritos) si el usuario está autenticado
+
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { Card } from "@/components/ui/card";
@@ -6,22 +9,32 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { addFavoriteAsync } from "@/service/favorites/favoritesService";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface CardNovelProps {
-  novel: Novel;
+  novel: Novel; // Propiedades de la novela que se va a renderizar
 }
 
 export default function CardNovel({ novel }: CardNovelProps) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { favorites, loading: favoritesLoading } = useSelector((state: RootState) => state.favorites);
+
+  // Estado global de favoritos y autenticación desde Redux
+  const { favorites, loading: favoritesLoading } = useSelector(
+    (state: RootState) => state.favorites
+  );
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  // Estados locales
   const [isLocalFavorite, setIsLocalFavorite] = useState(false);
-  
-  // Efecto para sincronizar el estado local con el estado global de Redux
+  const [isAddingFavorite, setIsAddingFavorite] = useState(false);
+
+  // Referencia para evitar múltiples clics
+  const hasAddedRef = useRef(false);
+
+  // Sincronizar el estado local con el global (Redux)
   useEffect(() => {
     if (isAuthenticated) {
       const favoriteExists = favorites.some((fav) => fav.novel_id === novel.id);
@@ -31,42 +44,52 @@ export default function CardNovel({ novel }: CardNovelProps) {
     }
   }, [favorites, novel.id, isAuthenticated]);
 
-  const handleAddFavorite = () => {
+  // Lógica para deshabilitar el botón
+  const buttonDisabled =
+    isLocalFavorite ||
+    isAddingFavorite ||
+    favoritesLoading ||
+    hasAddedRef.current;
+
+  // Manejar clic en "Añadir a la estantería"
+  const handleAddFavorite = async () => {
     if (!isAuthenticated) {
-      toast.error("Debes iniciar sesión para añadir a favoritos", {
-        position: "top-right",
-      });
+      toast.error("Debes iniciar sesión para añadir a favoritos");
       router.push("/login");
       return;
     }
 
-    // Verificar si ya está en favoritos
-    if (isLocalFavorite) {
-      return;
-    }
+    // Prevención de duplicados
+    if (isLocalFavorite || hasAddedRef.current) return;
 
-    // Actualización optimista de la UI
-    setIsLocalFavorite(true);
-    
-    dispatch(addFavoriteAsync(novel.id))
-      .then(() => {
-        toast.success("Novela añadida a la estantería", {
-          position: "top-right",
-        });
-      })
-      .catch((error) => {
-        // Revertir el cambio optimista en caso de error
-        setIsLocalFavorite(false);
-        console.error("Failed to add favorite:", error);
-        toast.error("Error al añadir a favoritos");
+    // Marcar como añadido para evitar múltiples clics
+    hasAddedRef.current = true;
+    setIsAddingFavorite(true); // Actualización optimista
+
+    try {
+      setIsLocalFavorite(true);
+      await dispatch(addFavoriteAsync(novel.id)); // Enviar acción Redux
+
+      // Si no hay errores, mostramos mensaje de éxito
+      toast.success("Novela añadida a la estantería", {
+        position: "top-right",
       });
+    } catch (error) {
+      setIsLocalFavorite(false); // Revertir si falla
+      hasAddedRef.current = false;
+      console.error("Failed to add favorite:", error);
+      toast.error("Error al añadir a favoritos");
+    } finally {
+      setIsAddingFavorite(false);
+    }
   };
 
   const { title, description, image, category } = novel;
 
   return (
-    <Card className="overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden bg-background  shadow-sm hover:shadow-md transition-shadow">
       <div className="flex p-4 gap-4">
+        {/* Imagen de portada */}
         <div className="flex-shrink-0">
           <Image
             src={image || "/placeholder.svg"}
@@ -76,9 +99,12 @@ export default function CardNovel({ novel }: CardNovelProps) {
             className="object-cover rounded-sm"
           />
         </div>
-
+        {/* Información textual de la novela */}
         <div className="flex-grow space-y-2">
-          <h3 className="font-bold text-lg leading-tight line-clamp-1" title={title || ""}>
+          <h3
+            className="font-bold text-lg leading-tight line-clamp-1 text-foreground"
+            title={title || ""}
+          >
             {title || "Sin título"}
           </h3>
 
@@ -88,7 +114,10 @@ export default function CardNovel({ novel }: CardNovelProps) {
             </Link>
           </div>
 
-          <p className="text-sm line-clamp-2" title={description || ""}>
+          <p
+            className="text-sm line-clamp-2 text-muted-foreground"
+            title={description || ""}
+          >
             {description || "Sin descripción"}
           </p>
         </div>
@@ -100,11 +129,17 @@ export default function CardNovel({ novel }: CardNovelProps) {
           {isAuthenticated && (
             <Button
               variant="outline"
-              className={`border-gray-300 ${isLocalFavorite ? "bg-gray-100" : ""}`}
+              className={`border-border text-foreground ${
+                isLocalFavorite ? "bg-muted" : ""
+              }`}
               onClick={handleAddFavorite}
-              disabled={isLocalFavorite || favoritesLoading}
+              disabled={buttonDisabled}
             >
-              {isLocalFavorite ? "En la estantería" : "Añadir a la estantería"}
+              {isAddingFavorite
+                ? "Añadiendo..."
+                : hasAddedRef.current || isLocalFavorite
+                ? "En la estantería"
+                : "Añadir a la estantería"}
             </Button>
           )}
           {!isAuthenticated && (

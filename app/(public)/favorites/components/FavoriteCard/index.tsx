@@ -12,10 +12,10 @@ export default function FavoriteCard({ favorite }: FavoriteCardProps) {
   const { novel, image } = favorite;
 
   return (
-    <Card className="overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-2">
+    <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-2">
       <div className="flex-shrink-0">
         <Image
-          src={image}
+          src={image || "/aaa.png"}
           alt={novel || "Portada de novela sin título"}
           width={80}
           height={80}

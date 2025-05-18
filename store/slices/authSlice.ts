@@ -13,18 +13,18 @@ import {
 } from "@/lib/utils/sessionStorage";
 import { removeCookie } from "@/lib/utils/cookies";
 
-// aqui elimine una interface usuario
-
+// Interfaz del estado de autenticación
 interface Auth {
-  user: User | null;
-  isAuthenticated: boolean;
+  user: User | null;         // Datos del usuario
+  isAuthenticated: boolean; // Estado de autenticación
 }
 
+// Estado inicial basado en datos persistentes
 const initialState: Auth = {
   isAuthenticated:
     (getLocalStorage("isAuthenticated") === "true" ||
       getSessionStorageUtil("isAuthenticated") === "true") &&
-    !!getCookie("token"),
+    !!getCookie("token"), // Solo si hay token en cookie
   user:
     (getLocalStorage("user")
       ? JSON.parse(getLocalStorage("user") as string)
@@ -32,39 +32,47 @@ const initialState: Auth = {
     (getSessionStorageUtil("user")
       ? JSON.parse(getSessionStorageUtil("user") as string)
       : null) ||
-    null,
+    null,  // Usuario desde almacenamiento
 };
 
+// Slice de autenticación
 export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    // Acción: iniciar sesión
     login: (state, action: PayloadAction<{ user: User; remember: boolean }>) => {
       state.isAuthenticated = true;
       state.user = action.payload.user;
 
       if (action.payload.remember) {
+        // Guardar en localStorage si el usuario quiere recordar sesión
         setLocalStorage("isAuthenticated", "true");
         setLocalStorage("user", JSON.stringify(action.payload.user));
       } else {
+        // Guardar en sessionStorage (se borra al cerrar navegador)
         removeLocalStorage("isAuthenticated");
         removeLocalStorage("user");
         setSessionStorage("isAuthenticated", "true");
         setSessionStorage("user", JSON.stringify(action.payload.user));
       }
     },
+     // Acción: cerrar sesión
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
+
+      // Limpiar almacenamiento y cookies
       removeSessionStorage("isAuthenticated");
       removeSessionStorage("user");
       removeCookie("token");
       removeLocalStorage("isAuthenticated");
       removeLocalStorage("user");
-      removeLocalStorage("vite-ui-theme");
+      removeLocalStorage("vite-ui-theme"); // Tema UI (opcional)
     },
   },
 });
 
+// Exportar acciones y reducer
 export const { login, logout } = authSlice.actions;
 export default authSlice.reducer;
