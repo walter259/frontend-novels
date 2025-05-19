@@ -1,10 +1,10 @@
-// components/SearchNovel.tsx
 "use client";
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import NovelList from "../components/NovelList";
+import NovelList from "../NovelList";
+
 
 
 interface SearchNovelProps {
@@ -15,13 +15,20 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Obtener categorías únicas de las novelas
+  // Asegurarse de que initialNovels esté definido
+  const novels = initialNovels || [];
+
+  // Obtener categorías únicas de las novelas con verificación de valores null/undefined
   const categories = Array.from(
-    new Set(initialNovels.map((novel) => novel.category).filter((category) => category !== null))
-  ) as string[];
+    new Set(
+      novels
+        .map((novel) => novel.category)
+        .filter((category): category is string => category !== null && category !== undefined)
+    )
+  );
 
   // Filtrar novelas por título y categoría
-  const filteredNovels = initialNovels.filter((novel) => {
+  const filteredNovels = novels.filter((novel) => {
     const matchesTitle = novel.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory ? novel.category === selectedCategory : true;
     return matchesTitle && matchesCategory;
@@ -50,7 +57,7 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
       <div className="mb-6 hidden md:flex flex-wrap justify-center gap-2">
         {categories.map((category) => (
           <Button
-            key={category}
+            key={category} // Ya tenemos la garantía de que category es string
             variant={selectedCategory === category ? "default" : "outline"}
             onClick={() => setSelectedCategory(category)}
             className={`rounded-full text-sm ${

@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { ChevronUp, User2 } from "lucide-react";
+import { ChevronUp, User2, Plus } from "lucide-react";
 import LogoutButton from "../LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -48,15 +48,35 @@ export default function Navbar() {
     return <div>Cargando...</div>; // Renderizado inicial mientras se carga el usuario
   }
 
+  // Verifica si el usuario es admin o moderador
+  const isAdminOrModerator = isAuthenticated && localUser && 
+    ["Admin", "Moderator"].includes(localUser.role);
+
+  console.log(isAdminOrModerator);
+  
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel></SidebarGroupLabel>
           <SidebarGroupContent>
+            {/* Botón de Crear - colocado antes del menú de navegación */}
+            
+            
             <SidebarMenu>
               <NavLinks />
             </SidebarMenu>
+
+            {isAdminOrModerator && (
+              <SidebarMenu className="mb-4">
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/create" className="flex items-center justify-center">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear
+                  </Link>
+                </Button>
+              </SidebarMenu>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -84,7 +104,7 @@ export default function Navbar() {
                     <ModeToggle/>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                  <Link href="/account" className="w-full text-center">Perfil</Link>
+                    <Link href="/account" className="w-full text-center">Perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <LogoutButton />
@@ -93,9 +113,9 @@ export default function Navbar() {
               </DropdownMenu>
             ) : (
               <Button asChild className="flex self-center">
-                <Link href="/login" >
-                Iniciar Sesión
-              </Link>
+                <Link href="/login">
+                  Iniciar Sesión
+                </Link>
               </Button>
             )}
           </SidebarMenuItem>

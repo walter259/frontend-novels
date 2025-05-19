@@ -49,11 +49,11 @@ export const createNovelAsync = (data: CreateNovelData) => async (dispatch: AppD
       formData.append("image", data.image);
     }
 
-    const response = await api.post<NovelResponse>("/novels", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await api.post<NovelResponse>("/novels/create", formData);
 
     const novel = response.data.novel;
+    console.log("novel",novel);
+    
     dispatch(addNovel(novel));
     return novel;
   } catch (error) {

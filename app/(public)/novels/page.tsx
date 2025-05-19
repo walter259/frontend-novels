@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import SearchNovel from "./SearchNovel";
+import SearchNovel from "./components/SearchNovel";
 import { getNovelsAsync } from "@/service/novels/novelsService";
 import { getFavoritesAsync } from "@/service/favorites/favoritesService";
 
