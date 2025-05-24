@@ -32,10 +32,6 @@ export default function NovelList({ novels }: NovelListProps) {
     }
   }, [dispatch, isAuthenticated, favoritesLoading, favorites.length]);
 
-  if (loading) {
-    return <div className="text-center p-4">Loading...</div>;
-  }
-
   if (error) {
     return <div className="text-center p-4 text-red-500">Error: {error}</div>;
   }

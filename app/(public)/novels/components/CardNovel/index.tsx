@@ -54,7 +54,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
   // Manejar clic en "Añadir a la estantería"
   const handleAddFavorite = async () => {
     if (!isAuthenticated) {
-      toast.error("Debes iniciar sesión para añadir a favoritos");
+      toast.warning("Debes iniciar sesión para añadir a favoritos");
       router.push("/login");
       return;
     }
@@ -84,26 +84,35 @@ export default function CardNovel({ novel }: CardNovelProps) {
     }
   };
 
+  // Función para navegar a la página del libro
+  const navigateToBook = () => {
+    router.push(`/book/${novel.id}`);
+  };
+
   const { title, description, image, category } = novel;
 
   return (
-    <Card className="overflow-hidden bg-background  shadow-sm hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow">
       <div className="flex p-4 gap-4">
-        {/* Imagen de portada */}
-        <div className="flex-shrink-0">
+        {/* Imagen de portada - ahora es clickable */}
+        <div 
+          className="flex-shrink-0 cursor-pointer" 
+          onClick={navigateToBook}
+        >
           <Image
             src={image || "/placeholder.svg"}
             alt={title || "Portada de novela sin título"}
             width={80}
             height={80}
-            className="object-cover rounded-sm"
+            className="object-cover rounded-sm hover:opacity-80 transition-opacity"
           />
         </div>
         {/* Información textual de la novela */}
         <div className="flex-grow space-y-2">
           <h3
-            className="font-bold text-lg leading-tight line-clamp-1 text-foreground"
+            className="font-bold text-lg leading-tight line-clamp-1 text-foreground cursor-pointer hover:text-primary transition-colors"
             title={title || ""}
+            onClick={navigateToBook}
           >
             {title || "Sin título"}
           </h3>
@@ -123,7 +132,10 @@ export default function CardNovel({ novel }: CardNovelProps) {
         </div>
 
         <div className="hidden md:flex flex-col gap-2 justify-center ml-auto">
-          <Button className="bg-red-600 hover:bg-red-700 text-white">
+          <Button 
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={navigateToBook}
+          >
             Haga clic para leer
           </Button>
           {isAuthenticated && (
