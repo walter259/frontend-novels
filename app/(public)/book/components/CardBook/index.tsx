@@ -125,7 +125,7 @@ export default function CardBook({ novel }: CardNovelProps) {
     router.push(`/book/${novel.id}`);
   };
 
-  const { title, image, category } = novel;
+  const { title, image, category, description } = novel;
 
   return (
     <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow">
@@ -134,7 +134,7 @@ export default function CardBook({ novel }: CardNovelProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           {/* Título - Mobile: orden 1, Desktop: columna 2-3 */}
           <h3
-            className="font-bold text-lg text-center md:text-left leading-tight line-clamp-1 text-foreground hover:text-primary transition-colors order-1 md:order-2 md:col-span-2"
+            className="font-bold text-lg text-center md:text-left leading-tight  text-foreground hover:text-primary transition-colors order-1 md:order-2 md:col-span-2"
             title={title || ""}
           >
             {title || "Sin título"}
@@ -150,11 +150,18 @@ export default function CardBook({ novel }: CardNovelProps) {
               className="object-cover rounded-sm hover:opacity-80 transition-opacity"
             />
           </div>
-
+          
           {/* Categoría - Mobile: orden 3, Desktop: columna 2-3 */}
-          <p className="text-xs text-muted-foreground text-center md:text-left order-3 md:order-3 md:col-span-2">
-            Categoría: {category || "Sin categoría"}
+          <div className="text-xs text-muted-foreground md:text-left order-3 md:order-3 md:col-span-2">
+            
+            <p
+            className="text-sm text-muted-foreground mb-2"
+            title={description || ""}
+          >
+            {description || "Sin descripción"}
           </p>
+            <p>Categoría: {category || "Sin categoría"}</p> 
+          </div>
 
           {/* Botones - Mobile: orden 4, Desktop: columna 2-3 */}
           <div className="flex flex-col md:grid md:grid-cols-3 md:items-center gap-2 order-4 md:order-4 md:col-span-2">

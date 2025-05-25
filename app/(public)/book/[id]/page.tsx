@@ -6,8 +6,7 @@ import { AppDispatch } from "@/store/store";
 import { getNovelByIdAsync } from "@/service/novels/novelsService";
 import CardBook from "../components/CardBook";
 import { useParams } from "next/navigation";
-
-
+import ChapterList from "../components/ChapterList";
 
 export default function BookPage() {
   const params = useParams();
@@ -64,8 +63,8 @@ export default function BookPage() {
         {/* Información principal de la novela */}
         <CardBook novel={novel} />
         
-        {/* Lista de capítulos */}
-        
+        {/* Lista de capítulos - Ahora pasa el ID correcto */}
+        <ChapterList novelId={novel.id} />
       </div>
     </div>
   );

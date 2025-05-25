@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import ChapterCard from "../CardChapter/index";
+import CardChapter from "../CardChapter/index";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
-import api from "@/service/api";
+import { getChaptersAsync } from "@/service/chapter/chapterService";
+
 
 interface ChapterListProps {
-  novelId: number;
+  novelId: number; // Corregido: debe ser number, no Novel
 }
 
 export default function ChapterList({ novelId }: ChapterListProps) {
@@ -28,11 +29,9 @@ export default function ChapterList({ novelId }: ChapterListProps) {
         setLoading(true);
         setError(null);
         
-        // Usar la API directamente en lugar de Redux para evitar problemas de tipo
-        const response = await api.get(`/novels/${novelId}/chapters`);
-        if (response.data && response.data.chapters) {
-          setChapters(response.data.chapters);
-        }
+        // Usar el servicio de Redux
+        const fetchedChapters = await dispatch(getChaptersAsync(novelId));
+        setChapters(fetchedChapters);
       } catch (error) {
         console.error("Error fetching chapters:", error);
         setError("Error al cargar los capítulos");
@@ -41,8 +40,10 @@ export default function ChapterList({ novelId }: ChapterListProps) {
       }
     };
     
-    fetchChapters();
-  }, [novelId]);
+    if (novelId) {
+      fetchChapters();
+    }
+  }, [dispatch, novelId]);
   
   // Ordenar capítulos
   const sortedChapters = [...chapters].sort((a, b) => {
@@ -68,7 +69,7 @@ export default function ChapterList({ novelId }: ChapterListProps) {
     return (
       <Card className="w-full p-6">
         <div className="text-center text-red-500">
-          Error al cargar los capítulos. Inténtalo de nuevo.
+          {error}
         </div>
       </Card>
     );
@@ -78,19 +79,21 @@ export default function ChapterList({ novelId }: ChapterListProps) {
     <Card className="w-full p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Capítulos</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleSortOrder}
-          className="flex items-center gap-2"
-        >
-          Ordenar {sortAscending ? "Primero → Último" : "Último → Primero"}
-          {sortAscending ? (
-            <ArrowUpIcon className="h-4 w-4" />
-          ) : (
-            <ArrowDownIcon className="h-4 w-4" />
-          )}
-        </Button>
+        {chapters.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSortOrder}
+            className="flex items-center gap-2"
+          >
+            Ordenar {sortAscending ? "Primero → Último" : "Último → Primero"}
+            {sortAscending ? (
+              <ArrowUpIcon className="h-4 w-4" />
+            ) : (
+              <ArrowDownIcon className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </div>
       
       {chapters.length === 0 ? (
@@ -100,7 +103,7 @@ export default function ChapterList({ novelId }: ChapterListProps) {
       ) : (
         <div className="space-y-3">
           {sortedChapters.map((chapter) => (
-            <ChapterCard
+            <CardChapter
               key={chapter.id}
               chapter={chapter}
               novelId={novelId}

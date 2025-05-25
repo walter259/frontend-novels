@@ -17,7 +17,8 @@ interface ChapterResponse {
 export const getChaptersAsync = (novelId: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
-    const response = await api.get<ChaptersResponse>(`/novels/${novelId}/chapters`);
+    // Usando el endpoint correcto: /chapters/{novelId}
+    const response = await api.get<ChaptersResponse>(`/chapters/${novelId}`);
     const chapters = response.data.chapters;
     dispatch(setChapters(chapters));
     return chapters;
@@ -32,6 +33,7 @@ export const getChaptersAsync = (novelId: number) => async (dispatch: AppDispatc
 export const getChapterAsync = (novelId: number, chapterId: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
+    // Usando el endpoint correcto: /novels/{novelId}/chapters/{id}
     const response = await api.get<ChapterResponse>(`/novels/${novelId}/chapters/${chapterId}`);
     const chapter = response.data.chapter;
     dispatch(setCurrentChapter(chapter));
@@ -50,6 +52,8 @@ export const createChapterAsync = (
 ) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
+    // Si tienes un endpoint para crear capítulos, ajusta aquí
+    // Por ahora mantengo la estructura genérica
     const response = await api.post<ChapterResponse>(
       `/novels/${novelId}/chapters`,
       chapterData
@@ -67,13 +71,14 @@ export const createChapterAsync = (
 // Actualizar un capítulo existente
 export const updateChapterAsync = (
   novelId: number,
-  chapterNumber: number,
+  chapterId: number, // Cambiado de chapterNumber a chapterId para ser consistente
   chapterData: { title?: string; content?: string; chapter_number?: number }
 ) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
+    // Usando el endpoint correcto: /novels/{novelId}/chapters/{id}
     const response = await api.put<ChapterResponse>(
-      `/novels/${novelId}/chapters/${chapterNumber}`,
+      `/novels/${novelId}/chapters/${chapterId}`,
       chapterData
     );
     const chapter = response.data.chapter;
@@ -90,6 +95,7 @@ export const updateChapterAsync = (
 export const deleteChapterAsync = (novelId: number, chapterId: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
+    // Usando el endpoint correcto: /novels/{novelId}/chapters/{id}
     await api.delete(`/novels/${novelId}/chapters/${chapterId}`);
     dispatch(removeChapter(chapterId));
     return true;
