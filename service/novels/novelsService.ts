@@ -89,7 +89,7 @@ export const updateNovelAsync = (id: string, data: UpdateNovelData) => async (di
 export const deleteNovelAsync = (id: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
-    await api.delete(`/novels/${id}`);
+    await api.delete(`/novels/delete/${id}`);
     dispatch(removeNovel(id));
   } catch (error) {
     dispatch(setError(`Error deleting novel ${id}`));

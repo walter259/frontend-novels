@@ -8,9 +8,22 @@ import {
   removeFavoriteAsync,
   getFavoritesAsync,
 } from "@/service/favorites/favoritesService";
+import { deleteNovelAsync } from "@/service/novels/novelsService";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Trash2, Edit, Plus, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CardNovelProps {
   novel: Novel;
@@ -25,12 +38,19 @@ export default function CardBook({ novel }: CardNovelProps) {
     loading: favoritesLoading,
     error: favoritesError,
   } = useSelector((state: RootState) => state.favorites);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasLoadedFavorites, setHasLoadedFavorites] = useState(false);
+  const [isDeletingNovel, setIsDeletingNovel] = useState(false);
 
   const hasProcessedRef = useRef(false);
+
+  // Verificar roles del usuario
+  const isAdmin = user?.role === "Admin";
+  const isModerator = user?.role === "Moderator";
+  const canManageNovel = isAdmin; // Solo admin puede editar/eliminar
+  const canAddChapter = isAdmin || isModerator; // Admin y moderator pueden añadir capítulos
 
   const isFavorite =
     isAuthenticated &&
@@ -121,6 +141,45 @@ export default function CardBook({ novel }: CardNovelProps) {
     }
   };
 
+  const handleDeleteNovel = async () => {
+    if (!canManageNovel) {
+      toast.error("No tienes permisos para eliminar novelas");
+      return;
+    }
+
+    setIsDeletingNovel(true);
+    try {
+      await dispatch(deleteNovelAsync(novel.id));
+      toast.success("Novela eliminada correctamente", {
+        position: "top-right",
+      });
+      router.push("/novels");
+      // Opcional: recargar la página o actualizar la lista de novelas
+      
+    } catch (error) {
+      console.error("Error al eliminar novela:", error);
+      toast.error("Error al eliminar la novela");
+    } finally {
+      setIsDeletingNovel(false);
+    }
+  };
+
+  const handleUpdateNovel = () => {
+    if (!canManageNovel) {
+      toast.error("No tienes permisos para editar novelas");
+      return;
+    }
+    router.push(`/update/${novel.id}`);
+  };
+
+  const handleAddChapter = () => {
+    if (!canAddChapter) {
+      toast.error("No tienes permisos para añadir capítulos");
+      return;
+    }
+    router.push(`/novels/${novel.id}/chapters/create`);
+  };
+
   const navigateToBook = () => {
     router.push(`/book/${novel.id}`);
   };
@@ -134,14 +193,14 @@ export default function CardBook({ novel }: CardNovelProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           {/* Título - Mobile: orden 1, Desktop: columna 2-3 */}
           <h3
-            className="font-bold text-lg text-center md:text-left leading-tight  text-foreground hover:text-primary transition-colors order-1 md:order-2 md:col-span-2"
+            className="font-bold text-lg text-center md:text-left leading-tight text-foreground hover:text-primary transition-colors order-1 md:order-2 md:col-span-2"
             title={title || ""}
           >
             {title || "Sin título"}
           </h3>
 
           {/* Imagen - Mobile: orden 2, Desktop: columna 1 (ocupa todas las filas) */}
-          <div className="flex justify-center  items-center order-2 md:order-1 md:row-span-3 md:col-span-1">
+          <div className="flex justify-center items-center order-2 md:order-1 md:row-span-4 md:col-span-1">
             <Image
               src={image || "/placeholder.svg"}
               alt={title || "Portada de novela sin título"}
@@ -151,19 +210,18 @@ export default function CardBook({ novel }: CardNovelProps) {
             />
           </div>
           
-          {/* Categoría - Mobile: orden 3, Desktop: columna 2-3 */}
+          {/* Categoría y Descripción - Mobile: orden 3, Desktop: columna 2-3 */}
           <div className="text-xs text-muted-foreground md:text-left order-3 md:order-3 md:col-span-2">
-            
             <p
-            className="text-sm text-muted-foreground mb-2"
-            title={description || ""}
-          >
-            {description || "Sin descripción"}
-          </p>
+              className="text-sm text-muted-foreground mb-2"
+              title={description || ""}
+            >
+              {description || "Sin descripción"}
+            </p>
             <p>Categoría: {category || "Sin categoría"}</p> 
           </div>
 
-          {/* Botones - Mobile: orden 4, Desktop: columna 2-3 */}
+          {/* Botones principales (Leer y Favoritos) - Mobile: orden 4, Desktop: columna 2-3 */}
           <div className="flex flex-col md:grid md:grid-cols-3 md:items-center gap-2 order-4 md:order-4 md:col-span-2">
             <Button
               className="bg-red-600 hover:bg-red-700 text-white md:col-span-1"
@@ -171,7 +229,7 @@ export default function CardBook({ novel }: CardNovelProps) {
             >
               Leer
             </Button>
-
+            
             {isAuthenticated ? (
               <Button
                 variant={isFavorite ? "secondary" : "outline"}
@@ -196,13 +254,91 @@ export default function CardBook({ novel }: CardNovelProps) {
             ) : (
               <Button
                 variant="outline"
-                className="border-gray-300"
+                className="border-gray-300 md:col-span-2"
                 onClick={() => router.push("/login")}
               >
                 Añadir a la estantería
               </Button>
             )}
           </div>
+
+          {/* Botones de administración - Solo visibles para usuarios con permisos */}
+          {isAuthenticated && (canManageNovel || canAddChapter) && (
+            <div className="flex flex-col md:flex-row gap-2 order-5 md:order-5 md:col-span-2">
+              {/* Botón Añadir Capítulo - Admin y Moderator */}
+              {canAddChapter && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddChapter}
+                  className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                >
+                  <Plus className="h-4 w-4" />
+                  Añadir Capítulo
+                </Button>
+              )}
+
+              {/* Botones de Admin - Solo Admin */}
+              {canManageNovel && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUpdateNovel}
+                    className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                        disabled={isDeletingNovel}
+                      >
+                        {isDeletingNovel ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        {isDeletingNovel ? "Eliminando..." : "Eliminar"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción no se puede deshacer. Esto eliminará permanentemente la novela
+                          <strong> {title} </strong>
+                          y todos sus capítulos asociados de nuestros servidores, incluyendo la imagen almacenada en Cloudinary.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteNovel}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={isDeletingNovel}
+                        >
+                          {isDeletingNovel ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Eliminando...
+                            </>
+                          ) : (
+                            "Sí, eliminar novela"
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Card>
