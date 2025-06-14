@@ -3,11 +3,19 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import NovelForm from "./components/NovelForm";
+import NovelUpdateForm from "../components/UpdateNovelForm";
 
-export default function Create() {
+
+interface UpdatePageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function UpdateNovel({ params }: UpdatePageProps) {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
+  const { id } = params;
 
   // Verificar si el usuario está autenticado y tiene permisos adecuados
   useEffect(() => {
@@ -40,11 +48,9 @@ export default function Create() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center p-6 max-w-md">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">
-            Acceso Denegado
-          </h1>
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Acceso Denegado</h1>
           <p className="mb-4">No tienes permisos para acceder a esta página.</p>
-          <button
+          <button 
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
           >
@@ -58,7 +64,9 @@ export default function Create() {
   // Si todo está correcto, mostrar el formulario
   return (
     <div className="container mx-auto px-4 py-8">
-      <NovelForm />
+      <h1 className="text-3xl font-bold text-center mb-8">Actualizar Novela</h1>
+      <NovelUpdateForm novelId={id} />
     </div>
   );
 }
+

@@ -7,7 +7,14 @@ import Image from "next/image";
 
 import api from "@/service/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,7 +25,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { Loader2, ImagePlus, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -27,23 +40,11 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { createNovelAsync } from "@/service/novels/novelsService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// Esquema de validación para el formulario
-const NovelFormSchema = z.object({
-  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
-  description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
-  category_id: z.string().min(1, "Debes seleccionar una categoría"),
-  image: z.any().optional()
-});
+import { NovelFormSchema } from "@/lib/validators/novel";
 
 type NovelFormValues = z.infer<typeof NovelFormSchema>;
 
-interface Category {
-  id: number;
-  name: string;
-}
-
-const NovelForm = () => {
+export default function NovelForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<boolean>(false);
@@ -54,7 +55,6 @@ const NovelForm = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  // Configurar react-hook-form con zod
   const form = useForm<NovelFormValues>({
     resolver: zodResolver(NovelFormSchema),
     defaultValues: {
@@ -63,7 +63,7 @@ const NovelForm = () => {
       category_id: "",
     },
   });
-  
+
   const isLoading = form.formState.isSubmitting;
 
   // Cargar categorías al iniciar
@@ -87,31 +87,31 @@ const NovelForm = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageError(false); // Resetear error al intentar de nuevo
     setImageLoaded(false);
-    
+
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Validar tamaño de archivo (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error("La imagen es demasiado grande. Máximo 5MB.");
         return;
       }
-      
+
       // Validar tipo de archivo
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("El archivo seleccionado no es una imagen válida.");
         return;
       }
-      
+
       setImageFile(file);
       form.setValue("image", file);
-      
+
       // Crear preview de la imagen con manejo de errores
       const reader = new FileReader();
-      
+
       reader.onloadend = () => {
         try {
-          if (typeof reader.result === 'string') {
+          if (typeof reader.result === "string") {
             setImagePreview(reader.result);
           } else {
             setImageError(true);
@@ -122,13 +122,13 @@ const NovelForm = () => {
           setImageError(true);
         }
       };
-      
+
       reader.onerror = () => {
         console.error("Error al leer el archivo");
         setImageError(true);
         toast.error("Error al leer la imagen");
       };
-      
+
       try {
         reader.readAsDataURL(file);
       } catch (error) {
@@ -154,17 +154,21 @@ const NovelForm = () => {
   const onSubmit = async (values: NovelFormValues) => {
     try {
       if (imageError) {
-        toast.error("Hay un problema con la imagen seleccionada. Por favor, selecciona otra imagen.");
+        toast.error(
+          "Hay un problema con la imagen seleccionada. Por favor, selecciona otra imagen."
+        );
         return;
       }
-      
-      await dispatch(createNovelAsync({
-        title: values.title,
-        description: values.description,
-        category_id: parseInt(values.category_id),
-        image: imageFile || undefined,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any);
+
+      await dispatch(
+        createNovelAsync({
+          title: values.title,
+          description: values.description,
+          category_id: parseInt(values.category_id),
+          image: imageFile || undefined,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any
+      );
 
       toast.success("La novela ha sido creada correctamente");
 
@@ -185,7 +189,7 @@ const NovelForm = () => {
           Completa el formulario para crear una nueva historia
         </CardDescription>
       </CardHeader>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
@@ -197,9 +201,9 @@ const NovelForm = () => {
                 <FormItem>
                   <FormLabel>Título</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ingresa el título de tu novela" 
-                      {...field} 
+                    <Input
+                      placeholder="Ingresa el título de tu novela"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -215,10 +219,10 @@ const NovelForm = () => {
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Escribe una breve sinopsis de tu historia"
                       rows={5}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -240,14 +244,17 @@ const NovelForm = () => {
                         <span>Cargando categorías...</span>
                       </div>
                     ) : (
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una categoría" />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((category) => (
-                            <SelectItem 
-                              key={category.id} 
+                            <SelectItem
+                              key={category.id}
                               value={category.id.toString()}
                             >
                               {category.name}
@@ -275,38 +282,43 @@ const NovelForm = () => {
                         <Alert variant="destructive" className="mb-4">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            Error al cargar la imagen. Por favor, intenta con otra imagen.
+                            Error al cargar la imagen. Por favor, intenta con
+                            otra imagen.
                           </AlertDescription>
                         </Alert>
                       )}
-                      
+
                       {imagePreview && !imageError && (
                         <div className="relative w-full max-w-xs h-48 rounded-md overflow-hidden">
                           {/* Usando Image de Next.js con manejador de errores */}
-                          {!imageLoaded && <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                          </div>}
-                          <Image 
-                            src={imagePreview} 
-                            alt="Vista previa" 
+                          {!imageLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                          )}
+                          <Image
+                            src={imagePreview}
+                            alt="Vista previa"
                             fill
-                            style={{ objectFit: 'cover' }}
+                            style={{ objectFit: "cover" }}
                             onError={handleImageLoadError}
                             onLoad={handleImageLoadSuccess}
-                            className={imageLoaded ? "opacity-100" : "opacity-0"}
+                            className={
+                              imageLoaded ? "opacity-100" : "opacity-0"
+                            }
                           />
                         </div>
                       )}
-                      
+
                       <div className="w-full">
-                        <label 
-                          htmlFor="image" 
+                        <label
+                          htmlFor="image"
                           className="cursor-pointer flex items-center justify-center w-full p-4 border-2 border-dashed rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                           <div className="flex flex-col items-center space-y-2">
                             <ImagePlus className="h-8 w-8 text-gray-400" />
                             <span className="text-sm font-medium">
-                              {imageFile ? 'Cambiar imagen' : 'Subir imagen'}
+                              {imageFile ? "Cambiar imagen" : "Subir imagen"}
                             </span>
                           </div>
                         </label>
@@ -326,17 +338,17 @@ const NovelForm = () => {
             />
           </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button 
-              type="button" 
+          <CardFooter className="flex justify-between mt-4">
+            <Button
+              type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={isLoading}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading || isLoadingCategories || imageError}
             >
               {isLoading ? (
@@ -345,7 +357,7 @@ const NovelForm = () => {
                   Creando...
                 </>
               ) : (
-                'Crear Novela'
+                "Crear Novela"
               )}
             </Button>
           </CardFooter>
@@ -353,6 +365,4 @@ const NovelForm = () => {
       </Form>
     </Card>
   );
-};
-
-export default NovelForm;
+}

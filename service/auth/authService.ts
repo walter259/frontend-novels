@@ -1,12 +1,14 @@
 // service/auth/authService.ts
 import { store } from "@/store/store";
 import { login, logout } from "@/store/slices/authSlice";
+import { clearAllCache } from "../favorites/favoritesService";
 import { setCookie } from "@/lib/utils/cookies";
 import api from "../api";
 import { ResetPasswordSchema } from "@/lib/validators/reset-password";
 import { z } from "zod";
 import { RegisterSchema } from "@/lib/validators/register";
 import { changePasswordSchema } from "@/lib/validators/change-password";
+import { clearFavorites } from "@/store/slices/favoritesSlice";
 
 interface LoginResponse {
   message: string;
@@ -26,14 +28,27 @@ export const loginUser = async (
 
   const response = await api.post<LoginResponse>("/auth/login", payload);
   const { token, user } = response.data;
+  
   setCookie("token", token, 1);
+  
+  // NUEVO: Limpiar favoritos antes de hacer login
+  store.dispatch(clearFavorites());
+  
   store.dispatch(login({ user, remember }));
   return response.data;
 };
 
 export const logoutUser = async () => {
-  await api.post("/auth/logout");
-  store.dispatch(logout());
+  try {
+    await api.post("/auth/logout");
+  } catch (error) {
+    console.warn("Error during logout API call:", error);
+  } finally {
+    // NUEVO: Limpiar favoritos y caché al hacer logout
+    store.dispatch(clearFavorites());
+    clearAllCache();
+    store.dispatch(logout());
+  }
 };
 
 export const registerUser = async (data: z.infer<typeof RegisterSchema>) => {

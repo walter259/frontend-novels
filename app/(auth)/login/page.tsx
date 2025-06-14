@@ -26,7 +26,7 @@ export default function Login() {
           </Link>
         </p>
 
-        <p className="text-sm">
+        <p className="text-sm mt-2">
           <Link href="/register" className="text-gray-600 hover:underline">
             ¿No tienes cuenta? ¡Regístrate!
           </Link>

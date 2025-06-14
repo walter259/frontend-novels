@@ -67,12 +67,15 @@ export const updateNovelAsync = (id: string, data: UpdateNovelData) => async (di
   try {
     dispatch(setLoading());
     const formData = new FormData();
-    if (data.title) formData.append("title", data.title);
-    if (data.description) formData.append("description", data.description);
-    if (data.category_id) formData.append("category_id", data.category_id.toString());
+    
+    // Solo agregar campos que realmente se van a actualizar
+    if (data.title !== undefined) formData.append("title", data.title);
+    if (data.description !== undefined) formData.append("description", data.description);
+    if (data.category_id !== undefined) formData.append("category_id", data.category_id.toString());
     if (data.image) formData.append("image", data.image);
 
-    const response = await api.put<NovelResponse>(`/novels/${id}`, formData, {
+    // Cambié PUT por PATCH y ajusté la URL para coincidir con tu backend
+    const response = await api.patch<NovelResponse>(`/novels/update/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
