@@ -75,7 +75,7 @@ export const updateNovelAsync = (id: string, data: UpdateNovelData) => async (di
     if (data.image) formData.append("image", data.image);
 
     // Cambié PUT por PATCH y ajusté la URL para coincidir con tu backend
-    const response = await api.patch<NovelResponse>(`/novels/update/${id}`, formData, {
+    const response = await api.post<NovelResponse>(`/novels/update/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 

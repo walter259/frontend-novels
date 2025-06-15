@@ -1,7 +1,12 @@
 // components/CardChapter/index.tsx
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, ClockIcon } from "lucide-react";
+import { BookOpenIcon, ClockIcon, EditIcon, TrashIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { deleteChapterAsync } from "@/service/chapter/chapterService";
+import { useAppDispatch } from "@/store/store";
 
 interface ChapterCardProps {
   chapter: Chapter;
@@ -10,11 +15,41 @@ interface ChapterCardProps {
 
 export default function CardChapter({ chapter, novelId }: ChapterCardProps) {
   const router = useRouter();
-
+  const { user, isAuthenticated } = useAuth();
+  const [localUser, setLocalUser] = useState(user);
+  console.log(setLocalUser)
+  const dispatch = useAppDispatch();
+  
   // Manejar clic en el capítulo
   const handleClick = () => {
     router.push(`/books/${novelId}/chapters/${chapter.id}`);
   };
+
+  // Manejar edición
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/books/${novelId}/chapters/${chapter.id}/edit`);
+  };
+
+  // Manejar eliminación
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+   
+    const confirmDelete = window.confirm('¿Estás seguro de querer eliminar este capítulo?');
+    if (confirmDelete) {
+      try {
+        // Parámetros corregidos: (novelId, chapterId)
+        await dispatch(deleteChapterAsync(novelId, chapter.id));
+        console.log('Capítulo eliminado exitosamente');
+      } catch (error) {
+        console.error('Error al eliminar capítulo:', error);
+        alert('Error al eliminar el capítulo. Inténtalo de nuevo.');
+      }
+    }
+  };
+
+  const isAdminOrModerator = isAuthenticated && localUser && 
+    ["Admin", "Moderator"].includes(localUser.role);
 
   // Formatear fecha si existe
   const formatDate = (dateString?: string) => {
@@ -93,8 +128,30 @@ export default function CardChapter({ chapter, novelId }: ChapterCardProps) {
           </div>
         </div>
 
-        {/* Indicador visual */}
-        <div className="flex-shrink-0 ml-2">
+        {/* Botones de administrador y indicador visual */}
+        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+          {isAdminOrModerator && (
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={handleEdit}
+                variant="ghost"
+                className="cursor-pointer"
+                title="Editar capítulo"
+              >
+                <EditIcon className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                onClick={handleDelete}
+                variant="ghost"
+                className="cursor-pointer"
+                title="Eliminar capítulo"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
           <div className="w-2 h-2 rounded-full bg-primary/30" />
         </div>
       </div>

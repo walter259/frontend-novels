@@ -1,21 +1,18 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import NovelUpdateForm from "../components/UpdateNovelForm";
 
 
-interface UpdatePageProps {
-  params: {
-    id: string;
-  };
-}
 
-export default function UpdateNovel({ params }: UpdatePageProps) {
+
+export default function UpdateNovel() {
   const { user, isAuthenticated } = useAuth();
+  const params = useParams();
   const router = useRouter();
-  const { id } = params;
+  const  id  = params.id as string;
 
   // Verificar si el usuario está autenticado y tiene permisos adecuados
   useEffect(() => {

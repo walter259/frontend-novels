@@ -55,7 +55,7 @@ export const createChapterAsync = (
     // Si tienes un endpoint para crear capítulos, ajusta aquí
     // Por ahora mantengo la estructura genérica
     const response = await api.post<ChapterResponse>(
-      `/novels/${novelId}/chapters`,
+      `/novels/${novelId}/chapters/create`,
       chapterData
     );
     const chapter = response.data.chapter;
@@ -95,8 +95,8 @@ export const updateChapterAsync = (
 export const deleteChapterAsync = (novelId: number, chapterId: number) => async (dispatch: AppDispatch) => {
   try {
     dispatch(setLoading());
-    // Usando el endpoint correcto: /novels/{novelId}/chapters/{id}
-    await api.delete(`/novels/${novelId}/chapters/${chapterId}`);
+  
+    await api.delete(`/novels/${novelId}/chapters/delete/${chapterId}`);
     dispatch(removeChapter(chapterId));
     return true;
   } catch (error) {

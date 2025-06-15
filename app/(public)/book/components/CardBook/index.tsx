@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getChaptersAsync } from "@/service/chapter/chapterService";
 
 interface CardNovelProps {
   novel: Novel;
@@ -177,11 +178,23 @@ export default function CardBook({ novel }: CardNovelProps) {
       toast.error("No tienes permisos para añadir capítulos");
       return;
     }
-    router.push(`/novels/${novel.id}/chapters/create`);
+    router.push(`/chapters/create/${novel.id}`);
   };
 
-  const navigateToBook = () => {
-    router.push(`/book/${novel.id}`);
+  const navigateToBook = async () => {
+    try {
+      const chapters = await dispatch(getChaptersAsync(novel.id));
+      if (chapters && chapters.length > 0) {
+        // Ordenar capítulos por número y obtener el primero
+        const firstChapter = chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)[0];
+        router.push(`/books/${novel.id}/chapters/${firstChapter.id}`);
+      } else {
+        toast.error("No hay capítulos disponibles");
+      }
+    } catch (error) {
+      console.error("Error al obtener capítulos:", error);
+      toast.error("Error al cargar los capítulos");
+    }
   };
 
   const { title, image, category, description } = novel;

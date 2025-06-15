@@ -1,51 +1,52 @@
 // components/ChapterList/index.tsx
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import CardChapter from "../CardChapter/index";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { getChaptersAsync } from "@/service/chapter/chapterService";
-
+import { clearChapters } from "@/store/slices/chapterSlice";
 
 interface ChapterListProps {
-  novelId: number; // Corregido: debe ser number, no Novel
+  novelId: number;
 }
 
 export default function ChapterList({ novelId }: ChapterListProps) {
   const dispatch = useDispatch<AppDispatch>();
   
-  // Estados locales
-  const [sortAscending, setSortAscending] = useState(true);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Usar el estado global de Redux en lugar del estado local
+  const { chapters, loading, error } = useSelector((state: RootState) => state.chapters);
   
-  // Cargar capítulos al montar el componente
+  // Solo mantener el estado de ordenamiento localmente
+  const [sortAscending, setSortAscending] = useState(true);
+  
+  // Cargar capítulos al montar el componente o cambiar novelId
   useEffect(() => {
     const fetchChapters = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        // Limpiar capítulos anteriores al cambiar de novela
+        dispatch(clearChapters());
         
-        // Usar el servicio de Redux
-        const fetchedChapters = await dispatch(getChaptersAsync(novelId));
-        setChapters(fetchedChapters);
+        // Cargar nuevos capítulos
+        await dispatch(getChaptersAsync(novelId));
       } catch (error) {
         console.error("Error fetching chapters:", error);
-        setError("Error al cargar los capítulos");
-      } finally {
-        setLoading(false);
       }
     };
     
     if (novelId) {
       fetchChapters();
     }
+    
+    // Limpiar capítulos al desmontar o cambiar novelId
+    return () => {
+      dispatch(clearChapters());
+    };
   }, [dispatch, novelId]);
   
-  // Ordenar capítulos
+  // Ordenar capítulos usando el estado global
   const sortedChapters = [...chapters].sort((a, b) => {
     return sortAscending 
       ? a.chapter_number - b.chapter_number 
