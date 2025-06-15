@@ -77,8 +77,8 @@ export const updateChapterAsync = (
   try {
     dispatch(setLoading());
     // Usando el endpoint correcto: /novels/{novelId}/chapters/{id}
-    const response = await api.put<ChapterResponse>(
-      `/novels/${novelId}/chapters/${chapterId}`,
+    const response = await api.patch<ChapterResponse>(
+      `/novels/${novelId}/chapters/update/${chapterId}`,
       chapterData
     );
     const chapter = response.data.chapter;

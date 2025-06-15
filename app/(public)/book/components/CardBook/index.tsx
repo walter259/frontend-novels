@@ -178,7 +178,7 @@ export default function CardBook({ novel }: CardNovelProps) {
       toast.error("No tienes permisos para añadir capítulos");
       return;
     }
-    router.push(`/chapters/create/${novel.id}`);
+    router.push(`/chapters/${novel.id}/create`);
   };
 
   const navigateToBook = async () => {

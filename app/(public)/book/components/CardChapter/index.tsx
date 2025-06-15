@@ -28,7 +28,7 @@ export default function CardChapter({ chapter, novelId }: ChapterCardProps) {
   // Manejar edición
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/books/${novelId}/chapters/${chapter.id}/edit`);
+    router.push(`/chapters/${novelId}/edit/${chapter.id}`);
   };
 
   // Manejar eliminación
