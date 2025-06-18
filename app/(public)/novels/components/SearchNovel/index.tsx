@@ -1,11 +1,39 @@
+// components/SearchNovel.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense, lazy, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import NovelList from "../NovelList";
 
+// Lazy load de NovelList
+const NovelList = lazy(() => import("../NovelList"));
 
+// Skeleton para la lista de novelas
+const NovelListSkeleton = () => (
+  <div className="w-full max-w-7xl">
+    <div className="w-full grid grid-cols-1 gap-4 p-4 place-content-center">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="overflow-hidden bg-background shadow-sm rounded-lg animate-pulse">
+          <div className="flex p-4 gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 bg-gray-200 rounded-sm"></div>
+            </div>
+            <div className="flex-grow space-y-2">
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+            <div className="hidden md:flex flex-col gap-2 justify-center ml-auto">
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 interface SearchNovelProps {
   initialNovels: Novel[];
@@ -15,26 +43,28 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Asegurarse de que initialNovels esté definido
   const novels = initialNovels || [];
 
-  // Obtener categorías únicas de las novelas con verificación de valores null/undefined
-  const categories = Array.from(
-    new Set(
-      novels
-        .map((novel) => novel.category)
-        .filter((category): category is string => category !== null && category !== undefined)
-    )
+  // Memoizar las categorías para evitar recalcular en cada render
+  const categories = useMemo(() => 
+    Array.from(
+      new Set(
+        novels
+          .map((novel) => novel.category)
+          .filter((category): category is string => category !== null && category !== undefined)
+      )
+    ), [novels]
   );
 
-  // Filtrar novelas por título y categoría
-  const filteredNovels = novels.filter((novel) => {
-    const matchesTitle = novel.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory ? novel.category === selectedCategory : true;
-    return matchesTitle && matchesCategory;
-  });
+  // Memoizar las novelas filtradas para mejor rendimiento
+  const filteredNovels = useMemo(() => 
+    novels.filter((novel) => {
+      const matchesTitle = novel.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory ? novel.category === selectedCategory : true;
+      return matchesTitle && matchesCategory;
+    }), [novels, searchTerm, selectedCategory]
+  );
 
-  // Limpiar filtros
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedCategory(null);
@@ -57,7 +87,7 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
       <div className="mb-6 hidden md:flex flex-wrap justify-center gap-2">
         {categories.map((category) => (
           <Button
-            key={category} // Ya tenemos la garantía de que category es string
+            key={category}
             variant={selectedCategory === category ? "default" : "outline"}
             onClick={() => setSelectedCategory(category)}
             className={`rounded-full text-sm ${
@@ -78,10 +108,10 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
         </Button>
       </div>
 
-      {/* Lista de novelas filtradas */}
-      <div className="w-full max-w-7xl">
+      {/* Lista de novelas filtradas con lazy loading */}
+      <Suspense fallback={<NovelListSkeleton />}>
         <NovelList novels={filteredNovels} />
-      </div>
+      </Suspense>
     </div>
   );
 }

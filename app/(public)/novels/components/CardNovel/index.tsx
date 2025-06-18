@@ -1,7 +1,4 @@
-// Componente de tarjeta para mostrar información de una novela
-// Muestra portada, título, categoría, descripción y botones de acción
-// Permite añadir la novela a la estantería (favoritos) si el usuario está autenticado
-
+// components/CardNovel/CardNovel.tsx
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { Card } from "@/components/ui/card";
@@ -14,27 +11,22 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface CardNovelProps {
-  novel: Novel; // Propiedades de la novela que se va a renderizar
+  novel: Novel;
 }
 
 export default function CardNovel({ novel }: CardNovelProps) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  // Estado global de favoritos y autenticación desde Redux
   const { favorites, loading: favoritesLoading } = useSelector(
     (state: RootState) => state.favorites
   );
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-  // Estados locales
   const [isLocalFavorite, setIsLocalFavorite] = useState(false);
   const [isAddingFavorite, setIsAddingFavorite] = useState(false);
-
-  // Referencia para evitar múltiples clics
   const hasAddedRef = useRef(false);
 
-  // Sincronizar el estado local con el global (Redux)
   useEffect(() => {
     if (isAuthenticated) {
       const favoriteExists = favorites.some((fav) => fav.novel_id === novel.id);
@@ -44,14 +36,12 @@ export default function CardNovel({ novel }: CardNovelProps) {
     }
   }, [favorites, novel.id, isAuthenticated]);
 
-  // Lógica para deshabilitar el botón
   const buttonDisabled =
     isLocalFavorite ||
     isAddingFavorite ||
     favoritesLoading ||
     hasAddedRef.current;
 
-  // Manejar clic en "Añadir a la estantería"
   const handleAddFavorite = async () => {
     if (!isAuthenticated) {
       toast.warning("Debes iniciar sesión para añadir a favoritos");
@@ -59,23 +49,19 @@ export default function CardNovel({ novel }: CardNovelProps) {
       return;
     }
 
-    // Prevención de duplicados
     if (isLocalFavorite || hasAddedRef.current) return;
 
-    // Marcar como añadido para evitar múltiples clics
     hasAddedRef.current = true;
-    setIsAddingFavorite(true); // Actualización optimista
+    setIsAddingFavorite(true);
 
     try {
       setIsLocalFavorite(true);
-      await dispatch(addFavoriteAsync(novel.id)); // Enviar acción Redux
-
-      // Si no hay errores, mostramos mensaje de éxito
+      await dispatch(addFavoriteAsync(novel.id));
       toast.success("Novela añadida a la estantería", {
         position: "top-right",
       });
     } catch (error) {
-      setIsLocalFavorite(false); // Revertir si falla
+      setIsLocalFavorite(false);
       hasAddedRef.current = false;
       console.error("Failed to add favorite:", error);
       toast.error("Error al añadir a favoritos");
@@ -84,7 +70,6 @@ export default function CardNovel({ novel }: CardNovelProps) {
     }
   };
 
-  // Función para navegar a la página del libro
   const navigateToBook = () => {
     router.push(`/book/${novel.id}`);
   };
@@ -94,7 +79,6 @@ export default function CardNovel({ novel }: CardNovelProps) {
   return (
     <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow">
       <div className="flex p-4 gap-4">
-        {/* Imagen de portada - ahora es clickable */}
         <div 
           className="flex-shrink-0 cursor-pointer" 
           onClick={navigateToBook}
@@ -107,7 +91,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
             className="object-cover rounded-sm hover:opacity-80 transition-opacity"
           />
         </div>
-        {/* Información textual de la novela */}
+        
         <div className="flex-grow space-y-2">
           <h3
             className="font-bold text-lg leading-tight line-clamp-1 text-foreground cursor-pointer hover:text-primary transition-colors"

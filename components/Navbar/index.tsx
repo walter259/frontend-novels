@@ -27,7 +27,6 @@ import { getCurrentUser } from "@/service/auth/authService";
 import { Button } from "../ui/button";
 import ModeToggle from "../ModeToggle";
 
-
 export default function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -49,11 +48,13 @@ export default function Navbar() {
   }
 
   // Verifica si el usuario es admin o moderador
-  const isAdminOrModerator = isAuthenticated && localUser && 
+  const isAdminOrModerator =
+    isAuthenticated &&
+    localUser &&
     ["Admin", "Moderator"].includes(localUser.role);
 
   console.log(isAdminOrModerator);
-  
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -61,8 +62,7 @@ export default function Navbar() {
           <SidebarGroupLabel></SidebarGroupLabel>
           <SidebarGroupContent>
             {/* Botón de Crear - colocado antes del menú de navegación */}
-            
-            
+
             <SidebarMenu>
               <NavLinks />
             </SidebarMenu>
@@ -70,7 +70,10 @@ export default function Navbar() {
             {isAdminOrModerator && (
               <SidebarMenu className="mb-4">
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/create" className="flex items-center justify-center">
+                  <Link
+                    href="/create"
+                    className="flex items-center justify-center"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Crear
                   </Link>
@@ -99,12 +102,17 @@ export default function Navbar() {
                     <ChevronUp className="ml-auto" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                <DropdownMenuContent
+                  side="top"
+                  className="w-[--radix-popper-anchor-width]"
+                >
                   <DropdownMenuItem>
-                    <ModeToggle/>
+                    <ModeToggle />
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link href="/account" className="w-full text-center">Perfil</Link>
+                    <Link href="/account" className="w-full text-center">
+                      Perfil
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <LogoutButton />
@@ -113,9 +121,7 @@ export default function Navbar() {
               </DropdownMenu>
             ) : (
               <Button asChild className="flex self-center">
-                <Link href="/login">
-                  Iniciar Sesión
-                </Link>
+                <Link href="/login">Iniciar Sesión</Link>
               </Button>
             )}
           </SidebarMenuItem>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
 
 interface ChapterNavigationProps {
   novelId: number;
@@ -20,21 +21,36 @@ export default function ChapterNavigation({
   isLastChapter
 }: ChapterNavigationProps) {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const navigateWithDebounce = useCallback((path: string) => {
+    if (isNavigating) return; // Evitar múltiples navegaciones
+    
+    setIsNavigating(true);
+    router.push(path);
+    
+    // Resetear el estado después de un breve delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 1000);
+  }, [router, isNavigating]);
 
   const handlePreviousChapter = () => {
-    if (previousChapter) {
-      router.push(`/books/${novelId}/chapters/${previousChapter.id}`);
+    if (previousChapter && !isNavigating) {
+      navigateWithDebounce(`/books/${novelId}/chapters/${previousChapter.id}`);
     }
   };
 
   const handleNextChapter = () => {
-    if (nextChapter) {
-      router.push(`/books/${novelId}/chapters/${nextChapter.id}`);
+    if (nextChapter && !isNavigating) {
+      navigateWithDebounce(`/books/${novelId}/chapters/${nextChapter.id}`);
     }
   };
 
   const handleBackToBook = () => {
-    router.push(`/book/${novelId}`);
+    if (!isNavigating) {
+      navigateWithDebounce(`/book/${novelId}`);
+    }
   };
 
   return (
@@ -46,6 +62,11 @@ export default function ChapterNavigation({
           <p className="text-sm text-muted-foreground">
             Usa los botones para moverte entre capítulos o regresar a la información de la novela
           </p>
+          {isNavigating && (
+            <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+              Cargando capítulo...
+            </div>
+          )}
         </div>
 
         {/* Botones de navegación - Móvil: Stack vertical, Desktop: Grid horizontal */}
@@ -54,7 +75,7 @@ export default function ChapterNavigation({
           <Button
             variant="outline"
             onClick={handlePreviousChapter}
-            disabled={isFirstChapter || !previousChapter}
+            disabled={isFirstChapter || !previousChapter || isNavigating}
             className="flex items-center justify-center gap-2 h-12 md:col-span-1"
           >
             <ArrowLeftIcon className="h-4 w-4" />
@@ -70,6 +91,7 @@ export default function ChapterNavigation({
           <Button
             variant="secondary"
             onClick={handleBackToBook}
+            disabled={isNavigating}
             className="flex items-center justify-center gap-2 h-12 md:col-span-1 bg-primary/10 hover:bg-primary/20 text-primary"
           >
             <BookOpenIcon className="h-4 w-4" />
@@ -83,7 +105,7 @@ export default function ChapterNavigation({
           <Button
             variant="outline"
             onClick={handleNextChapter}
-            disabled={isLastChapter || !nextChapter}
+            disabled={isLastChapter || !nextChapter || isNavigating}
             className="flex items-center justify-center gap-2 h-12 md:col-span-1"
           >
             <div className="flex flex-col items-end">

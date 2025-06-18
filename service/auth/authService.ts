@@ -2,6 +2,8 @@
 import { store } from "@/store/store";
 import { login, logout } from "@/store/slices/authSlice";
 import { clearAllCache } from "../favorites/favoritesService";
+import { clearAllChapterCache } from "../chapter/chapterService";
+import { clearAllNovelsCache } from "../novels/novelsService";
 import { setCookie } from "@/lib/utils/cookies";
 import api from "../api";
 import { ResetPasswordSchema } from "@/lib/validators/reset-password";
@@ -47,6 +49,8 @@ export const logoutUser = async () => {
     // NUEVO: Limpiar favoritos y caché al hacer logout
     store.dispatch(clearFavorites());
     clearAllCache();
+    clearAllChapterCache();
+    clearAllNovelsCache();
     store.dispatch(logout());
   }
 };
