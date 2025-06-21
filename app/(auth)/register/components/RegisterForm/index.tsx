@@ -19,9 +19,26 @@ import { z } from "zod";
 import { registerUser } from "@/service/auth/authService";
 import { useState } from "react";
 
+// Función para formatear el nombre
+const formatName = (name: string): string => {
+  return name
+    .trim() // Elimina espacios al inicio y final
+    .toLowerCase() // Convierte todo a minúsculas
+    .replace(/\b\w/g, (char) => char.toUpperCase()) // Capitaliza primera letra de cada palabra
+    .replace(/\s+/g, " "); // Reemplaza múltiples espacios por uno solo
+};
+
+// Función para formatear el nombre de usuario
+const formatUsername = (username: string): string => {
+  return username
+    .trim() // Elimina espacios al inicio y final
+    .toLowerCase() // Convierte todo a minúsculas
+    .replace(/\s+/g, ""); // Elimina todos los espacios
+};
+
 export default function RegisterForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof RegisterSchema>>({
     resolver: zodResolver(RegisterSchema),
@@ -37,10 +54,17 @@ export default function RegisterForm() {
   const onSubmit = async (values: z.infer<typeof RegisterSchema>) => {
     setIsLoading(true);
     try {
-      await registerUser(values); 
+      // Formatear los valores antes de enviar
+      const formattedValues = {
+        ...values,
+        name: formatName(values.name),
+        user: formatUsername(values.user),
+      };
+
+      await registerUser(formattedValues);
       toast.success("Registro exitoso");
       router.push("/novels");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorDetails = error.response?.data?.errors || {};
       if (errorDetails.user && errorDetails.user[0]) {
@@ -55,11 +79,31 @@ export default function RegisterForm() {
           message: "El email ya está siendo usado.",
         });
       }
-      
+
       toast.error("Error al registrar");
-      console.log(error)
+      console.log(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Manejador para el campo nombre
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleNameChange = (field: any, value: string) => {
+    // Limitar longitud y aplicar formato
+    if (value.length <= 25) {
+      const formatted = formatName(value);
+      field.onChange(formatted);
+    }
+  };
+
+  // Manejador para el campo usuario
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleUsernameChange = (field: any, value: string) => {
+    // Limitar longitud y aplicar formato
+    if (value.length <= 15) {
+      const formatted = formatUsername(value);
+      field.onChange(formatted);
     }
   };
 
@@ -79,7 +123,12 @@ export default function RegisterForm() {
               <FormItem className="w-full">
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ingresa tu nombre" {...field} />
+                  <Input
+                    placeholder="Ingresar nombre"
+                    {...field}
+                    onChange={(e) => handleNameChange(field, e.target.value)}
+                    maxLength={25}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -92,9 +141,16 @@ export default function RegisterForm() {
             name="user"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel>Nombre de usuario</FormLabel>
+                <FormLabel>Usuario</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ingresa tu nombre de usuario" {...field} />
+                  <Input
+                    placeholder="Ingresar usuario"
+                    {...field}
+                    onChange={(e) =>
+                      handleUsernameChange(field, e.target.value)
+                    }
+                    maxLength={15}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -110,7 +166,11 @@ export default function RegisterForm() {
             <FormItem className="w-full">
               <FormLabel>Correo electrónico</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="Ingresa tu correo" {...field} />
+                <Input
+                  type="email"
+                  placeholder="Ingresar correo"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -125,7 +185,11 @@ export default function RegisterForm() {
             <FormItem className="w-full">
               <FormLabel>Contraseña</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Ingresa tu contraseña" {...field} />
+                <Input
+                  type="password"
+                  placeholder="Ingresar contraseña"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
