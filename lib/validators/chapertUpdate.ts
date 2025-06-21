@@ -1,0 +1,18 @@
+import { z } from "zod";
+
+export const ChapterUpdateSchema = z.object({
+  title: z
+    .string()
+    .min(3, "El título debe tener al menos 3 caracteres")
+    .max(200, "El título no puede exceder 200 caracteres")
+    .trim(),
+  content: z
+    .string()
+    .min(100, "El contenido debe tener al menos 100 caracteres")
+    .max(50000, "El contenido no puede exceder 50,000 caracteres")
+    .trim(),
+  chapter_number: z
+    .number()
+    .min(1, "El número de capítulo debe ser mayor a 0")
+    .optional(),
+});

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +7,14 @@ import Image from "next/image";
 
 import api from "@/service/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,33 +25,30 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { Loader2, ImagePlus, AlertCircle, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { updateNovelAsync, getNovelByIdAsync } from "@/service/novels/novelsService";
+import {
+  updateNovelAsync,
+  getNovelByIdAsync,
+} from "@/service/novels/novelsService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { NovelFormSchema } from "@/lib/validators/novel";
 
 // Esquema de validación para el formulario de actualización
-const UpdateNovelFormSchema = z.object({
-  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
-  description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
-  category_id: z.string().min(1, "Debes seleccionar una categoría"),
-  image: z.any().optional()
-});
 
-type UpdateNovelFormValues = z.infer<typeof UpdateNovelFormSchema>;
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-
+type UpdateNovelFormValues = z.infer<typeof NovelFormSchema>;
 
 interface NovelUpdateFormProps {
   novelId: string;
@@ -67,14 +70,14 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
 
   // Configurar react-hook-form con zod
   const form = useForm<UpdateNovelFormValues>({
-    resolver: zodResolver(UpdateNovelFormSchema),
+    resolver: zodResolver(NovelFormSchema),
     defaultValues: {
       title: "",
       description: "",
       category_id: "",
     },
   });
-  
+
   const isLoading = form.formState.isSubmitting;
 
   // Cargar datos de la novela y categorías al iniciar
@@ -89,17 +92,17 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
         // Cargar datos de la novela
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const novel = await dispatch(getNovelByIdAsync(novelId) as any);
-        
+
         if (novel) {
           form.setValue("title", novel.title);
           form.setValue("description", novel.description);
           form.setValue("category_id", novel.category_id.toString());
-          
+
           if (novel.image) {
             setCurrentImage(novel.image);
           }
         }
-        
+
         setIsLoadingNovel(false);
       } catch (error) {
         console.error("Error cargando datos:", error);
@@ -117,31 +120,31 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
     setImageError(false);
     setImageLoaded(false);
     setRemoveCurrentImage(false);
-    
+
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Validar tamaño de archivo (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error("La imagen es demasiado grande. Máximo 5MB.");
         return;
       }
-      
+
       // Validar tipo de archivo
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("El archivo seleccionado no es una imagen válida.");
         return;
       }
-      
+
       setImageFile(file);
       form.setValue("image", file);
-      
+
       // Crear preview de la imagen
       const reader = new FileReader();
-      
+
       reader.onloadend = () => {
         try {
-          if (typeof reader.result === 'string') {
+          if (typeof reader.result === "string") {
             setImagePreview(reader.result);
           } else {
             setImageError(true);
@@ -152,13 +155,13 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
           setImageError(true);
         }
       };
-      
+
       reader.onerror = () => {
         console.error("Error al leer el archivo");
         setImageError(true);
         toast.error("Error al leer la imagen");
       };
-      
+
       try {
         reader.readAsDataURL(file);
       } catch (error) {
@@ -203,10 +206,12 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
   const onSubmit = async (values: UpdateNovelFormValues) => {
     try {
       if (imageError) {
-        toast.error("Hay un problema con la imagen seleccionada. Por favor, selecciona otra imagen.");
+        toast.error(
+          "Hay un problema con la imagen seleccionada. Por favor, selecciona otra imagen."
+        );
         return;
       }
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
         title: values.title,
@@ -229,7 +234,9 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
       router.refresh();
     } catch (error) {
       console.error("Error al actualizar la novela:", error);
-      toast.error("No se pudo actualizar la novela. Por favor intenta nuevamente");
+      toast.error(
+        "No se pudo actualizar la novela. Por favor intenta nuevamente"
+      );
     }
   };
 
@@ -255,7 +262,7 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
           Modifica los datos de la novela existente
         </CardDescription>
       </CardHeader>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
@@ -267,9 +274,9 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                 <FormItem>
                   <FormLabel>Título</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ingresa el título de tu novela" 
-                      {...field} 
+                    <Input
+                      placeholder="Ingresa el título de tu novela"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -285,10 +292,10 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Escribe una breve sinopsis de tu historia"
                       rows={5}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -310,8 +317,8 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem 
-                            key={category.id} 
+                          <SelectItem
+                            key={category.id}
                             value={category.id.toString()}
                           >
                             {category.name}
@@ -338,23 +345,27 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                         <Alert variant="destructive" className="mb-4">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            Error al cargar la imagen. Por favor, intenta con otra imagen.
+                            Error al cargar la imagen. Por favor, intenta con
+                            otra imagen.
                           </AlertDescription>
                         </Alert>
                       )}
-                      
+
                       {/* Imagen actual */}
                       {currentImage && !removeCurrentImage && !imagePreview && (
                         <div className="relative w-full max-w-xs">
-                          <Badge className="absolute -top-2 -left-2 z-10" variant="secondary">
+                          <Badge
+                            className="absolute -top-2 -left-2 z-10"
+                            variant="secondary"
+                          >
                             Imagen actual
                           </Badge>
                           <div className="relative h-48 rounded-md overflow-hidden">
-                            <Image 
-                              src={currentImage} 
-                              alt="Imagen actual" 
+                            <Image
+                              src={currentImage}
+                              alt="Imagen actual"
                               fill
-                              style={{ objectFit: 'cover' }}
+                              style={{ objectFit: "cover" }}
                               className="rounded-md"
                             />
                           </div>
@@ -369,11 +380,14 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                           </Button>
                         </div>
                       )}
-                      
+
                       {/* Nueva imagen seleccionada */}
                       {imagePreview && !imageError && (
                         <div className="relative w-full max-w-xs">
-                          <Badge className="absolute -top-2 -left-2 z-10" variant="default">
+                          <Badge
+                            className="absolute -top-2 -left-2 z-10"
+                            variant="default"
+                          >
                             Nueva imagen
                           </Badge>
                           <div className="relative h-48 rounded-md overflow-hidden">
@@ -382,14 +396,16 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                               </div>
                             )}
-                            <Image 
-                              src={imagePreview} 
-                              alt="Vista previa" 
+                            <Image
+                              src={imagePreview}
+                              alt="Vista previa"
                               fill
-                              style={{ objectFit: 'cover' }}
+                              style={{ objectFit: "cover" }}
                               onError={handleImageLoadError}
                               onLoad={handleImageLoadSuccess}
-                              className={`rounded-md ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                              className={`rounded-md ${
+                                imageLoaded ? "opacity-100" : "opacity-0"
+                              }`}
                             />
                           </div>
                           <Button
@@ -403,17 +419,21 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
                           </Button>
                         </div>
                       )}
-                      
+
                       {/* Upload área */}
                       <div className="w-full">
-                        <label 
-                          htmlFor="image" 
+                        <label
+                          htmlFor="image"
                           className="cursor-pointer flex items-center justify-center w-full p-4 border-2 border-dashed rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                           <div className="flex flex-col items-center space-y-2">
                             <ImagePlus className="h-8 w-8 text-gray-400" />
                             <span className="text-sm font-medium">
-                              {imageFile ? 'Cambiar imagen' : currentImage ? 'Cambiar portada' : 'Subir imagen'}
+                              {imageFile
+                                ? "Cambiar imagen"
+                                : currentImage
+                                ? "Cambiar portada"
+                                : "Subir imagen"}
                             </span>
                           </div>
                         </label>
@@ -434,25 +454,22 @@ const NovelUpdateForm = ({ novelId }: NovelUpdateFormProps) => {
           </CardContent>
 
           <CardFooter className="flex justify-between">
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={isLoading}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading || imageError}
-            >
+            <Button type="submit" disabled={isLoading || imageError}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Actualizando...
                 </>
               ) : (
-                'Actualizar Novela'
+                "Actualizar Novela"
               )}
             </Button>
           </CardFooter>

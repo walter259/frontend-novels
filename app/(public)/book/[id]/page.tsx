@@ -27,7 +27,9 @@ export default function BookPage() {
         
         // Obtener la novela actual
         const fetchedNovel = await dispatch(getNovelByIdAsync(id));
-        setNovel(fetchedNovel);
+        if (fetchedNovel) {
+          setNovel(fetchedNovel);
+        }
       } catch (err) {
         console.error("Error fetching novel:", err);
         setError("No se pudo cargar la información de la novela. Inténtalo de nuevo.");

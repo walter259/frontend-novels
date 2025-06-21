@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 // AGREGAR ESTA IMPORTACIÓN
-
 
 import ChapterForm from "./components/ChapterForm";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,12 +17,14 @@ export default function CreateChapterPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   const novelId = params.novelId as string;
-  
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
   const { novels } = useSelector((state: RootState) => state.novels);
-  
+
   const [currentNovel, setCurrentNovel] = useState<Novel | null>(null);
   const [isLoadingNovel, setIsLoadingNovel] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,37 @@ export default function CreateChapterPage() {
   const isAdmin = user?.role === "Admin";
   const isModerator = user?.role === "Moderator";
   const canAddChapter = isAdmin || isModerator;
+
+  const loadNovel = useCallback(async () => {
+    try {
+      setIsLoadingNovel(true);
+      setError(null);
+
+      // Primero buscar en el estado local
+      const existingNovel = novels.find(
+        (novel) => novel.id === Number(novelId)
+      );
+
+      if (existingNovel) {
+        setCurrentNovel(existingNovel);
+        setIsLoadingNovel(false);
+        return;
+      }
+
+      // Si no está en el estado, obtenerla del servidor
+      // CORREGIR: pasar novelId como string, no como número
+      const novel = await dispatch(getNovelByIdAsync(novelId));
+      if (novel) {
+        setCurrentNovel(novel);
+      }
+    } catch (error) {
+      console.error("Error al cargar la novela:", error);
+      setError("No se pudo cargar la información de la novela");
+      toast.error("Error al cargar la novela");
+    } finally {
+      setIsLoadingNovel(false);
+    }
+  }, [novels, novelId, dispatch]);
 
   useEffect(() => {
     // Verificar autenticación
@@ -56,35 +88,7 @@ export default function CreateChapterPage() {
     }
 
     loadNovel();
-  }, [isAuthenticated, canAddChapter, novelId, router]);
-
-  const loadNovel = async () => {
-    try {
-      setIsLoadingNovel(true);
-      setError(null);
-
-      // Primero buscar en el estado local
-      const existingNovel = novels.find(novel => novel.id === Number(novelId));
-      
-      if (existingNovel) {
-        setCurrentNovel(existingNovel);
-        setIsLoadingNovel(false);
-        return;
-      }
-
-      // Si no está en el estado, obtenerla del servidor
-      // CORREGIR: pasar novelId como string, no como número
-      const novel = await dispatch(getNovelByIdAsync(novelId));
-      setCurrentNovel(novel);
-      
-    } catch (error) {
-      console.error("Error al cargar la novela:", error);
-      setError("No se pudo cargar la información de la novela");
-      toast.error("Error al cargar la novela");
-    } finally {
-      setIsLoadingNovel(false);
-    }
-  };
+  }, [isAuthenticated, canAddChapter, novelId, router, loadNovel]);
 
   // Mostrar loading mientras se verifica autenticación y permisos
   if (!isAuthenticated || isLoadingNovel) {
@@ -94,7 +98,9 @@ export default function CreateChapterPage() {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {!isAuthenticated ? "Verificando autenticación..." : "Cargando información de la novela..."}
+              {!isAuthenticated
+                ? "Verificando autenticación..."
+                : "Cargando información de la novela..."}
             </p>
           </div>
         </div>
@@ -112,11 +118,10 @@ export default function CreateChapterPage() {
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Acceso Denegado</h2>
               <p className="text-muted-foreground mb-4">
-                No tienes permisos para crear capítulos. Solo los administradores y moderadores pueden realizar esta acción.
+                No tienes permisos para crear capítulos. Solo los
+                administradores y moderadores pueden realizar esta acción.
               </p>
-              <Button onClick={() => router.push("/")}>
-                Volver al Inicio
-              </Button>
+              <Button onClick={() => router.push("/")}>Volver al Inicio</Button>
             </div>
           </CardContent>
         </Card>
@@ -128,15 +133,11 @@ export default function CreateChapterPage() {
   if (error) {
     return (
       <div className="container mx-auto max-w-4xl p-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
-        
+
         <Card className="mt-8">
           <CardContent className="pt-6">
             <div className="text-center">
@@ -159,10 +160,5 @@ export default function CreateChapterPage() {
   }
 
   // Mostrar formulario cuando todo está listo
-  return (
-    <ChapterForm 
-      novelId={novelId} 
-      novelTitle={currentNovel?.title} 
-    />
-  );
+  return <ChapterForm novelId={novelId} novelTitle={currentNovel?.title} />;
 }

@@ -5,14 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import NovelUpdateForm from "../components/UpdateNovelForm";
 
-
-
-
 export default function UpdateNovel() {
   const { user, isAuthenticated } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const  id  = params.id as string;
+  const id = params.id as string;
 
   // Verificar si el usuario está autenticado y tiene permisos adecuados
   useEffect(() => {
@@ -45,9 +42,11 @@ export default function UpdateNovel() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center p-6 max-w-md">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Acceso Denegado</h1>
+          <h1 className="text-2xl font-bold text-red-500 mb-4">
+            Acceso Denegado
+          </h1>
           <p className="mb-4">No tienes permisos para acceder a esta página.</p>
-          <button 
+          <button
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
           >
@@ -66,4 +65,3 @@ export default function UpdateNovel() {
     </div>
   );
 }
-

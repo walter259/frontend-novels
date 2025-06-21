@@ -43,7 +43,7 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const novels = initialNovels || [];
+  const novels = useMemo(() => initialNovels || [], [initialNovels]);
 
   // Memoizar las categorías para evitar recalcular en cada render
   const categories = useMemo(() => 

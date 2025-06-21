@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateChapterAsync } from "@/service/chapter/chapterService";
+import { ChapterUpdateSchema } from "@/lib/validators/chapertUpdate";
 
 interface ChapterUpdateFormProps {
   novelId: string;
@@ -31,35 +32,17 @@ interface ChapterUpdateFormProps {
   currentChapter: Chapter;
 }
 
-// Schema de validación con Zod
-const ChapterUpdateSchema = z.object({
-  title: z
-    .string()
-    .min(3, "El título debe tener al menos 3 caracteres")
-    .max(200, "El título no puede exceder 200 caracteres")
-    .trim(),
-  content: z
-    .string()
-    .min(100, "El contenido debe tener al menos 100 caracteres")
-    .max(50000, "El contenido no puede exceder 50,000 caracteres")
-    .trim(),
-  chapter_number: z
-    .number()
-    .min(1, "El número de capítulo debe ser mayor a 0")
-    .optional(),
-});
-
 type ChapterUpdateFormData = z.infer<typeof ChapterUpdateSchema>;
 
-export default function ChapterUpdateForm({ 
-  novelId, 
-  chapterId, 
-  novelTitle, 
-  currentChapter 
+export default function ChapterUpdateForm({
+  novelId,
+  chapterId,
+  novelTitle,
+  currentChapter,
 }: ChapterUpdateFormProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   const form = useForm<ChapterUpdateFormData>({
     resolver: zodResolver(ChapterUpdateSchema),
     defaultValues: {
@@ -69,7 +52,10 @@ export default function ChapterUpdateForm({
     },
   });
 
-  const { watch, formState: { isSubmitting, isDirty } } = form;
+  const {
+    watch,
+    formState: { isSubmitting, isDirty },
+  } = form;
   const contentValue = watch("content");
   const titleValue = watch("title");
   const charCount = contentValue?.length || 0;
@@ -88,26 +74,23 @@ export default function ChapterUpdateForm({
   const onSubmit = async (values: ChapterUpdateFormData) => {
     try {
       console.log("Actualizando capítulo:", values);
-      
+
       const updateData = {
         title: values.title,
         content: values.content,
         chapter_number: values.chapter_number,
       };
 
-      await dispatch(updateChapterAsync(
-        Number(novelId), 
-        Number(chapterId), 
-        updateData
-      ));
-      
+      await dispatch(
+        updateChapterAsync(Number(novelId), Number(chapterId), updateData)
+      );
+
       toast.success("Capítulo actualizado exitosamente", {
         position: "top-right",
       });
 
       // Redirigir a la página del capítulo o de la novela
       router.push(`/book/${novelId}`);
-      
     } catch (error) {
       console.error("Error al actualizar capítulo:", error);
       toast.error("Error al actualizar el capítulo. Inténtalo de nuevo.");
@@ -134,15 +117,11 @@ export default function ChapterUpdateForm({
     <div className="container mx-auto max-w-4xl p-4">
       {/* Header */}
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
-        
+
         <h1 className="text-3xl font-bold mb-2">Editar Capítulo</h1>
         {novelTitle && (
           <p className="text-muted-foreground">
@@ -258,7 +237,7 @@ export default function ChapterUpdateForm({
                     </>
                   )}
                 </Button>
-                
+
                 <Button
                   type="button"
                   variant="outline"

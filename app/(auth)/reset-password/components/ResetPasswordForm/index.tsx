@@ -13,20 +13,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Suspense } from "react";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { ResetPasswordSchema } from "@/lib/validators/reset-password";
 
 import { useState } from "react";
-import { updatePassword } from "@/service/auth/authService"; // Importa la función updatePassword
+import { updatePassword } from "@/service/auth/authService";
 
-export default function ResetPasswordForm() {
+// Component that uses useSearchParams
+function ResetPasswordFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof ResetPasswordSchema>>({
     resolver: zodResolver(ResetPasswordSchema),
@@ -39,19 +41,18 @@ export default function ResetPasswordForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof ResetPasswordSchema>) => {
-    setIsLoading(true); // Activa el estado de carga
+    setIsLoading(true);
     try {
-      const response = await updatePassword(values); // Usa la función de authService
+      const response = await updatePassword(values);
       console.log("Contraseña restablecida:", response);
       toast.success("Contraseña restablecida exitosamente.");
-      // No despachamos login aquí porque updatePassword no devuelve un nuevo user
-      setTimeout(() => router.push("/login"), 1500); // Retraso para que el usuario vea el toast
+      setTimeout(() => router.push("/login"), 1500);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error("Error al restablecer la contraseña.");
       console.log("Error detallado:", error);
     } finally {
-      setIsLoading(false); // Desactiva el estado de carga
+      setIsLoading(false);
     }
   };
 
@@ -114,5 +115,31 @@ export default function ResetPasswordForm() {
         </Button>
       </form>
     </Form>
+  );
+}
+
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="space-y-5 w-[99%] p-[0.3rem]">
+      <div className="animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+        <div className="h-10 bg-gray-200 rounded"></div>
+      </div>
+      <div className="animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+        <div className="h-10 bg-gray-200 rounded"></div>
+      </div>
+      <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function ResetPasswordForm() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ResetPasswordFormContent />
+    </Suspense>
   );
 }

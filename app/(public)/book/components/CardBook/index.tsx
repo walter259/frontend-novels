@@ -39,7 +39,9 @@ export default function CardBook({ novel }: CardNovelProps) {
     loading: favoritesLoading,
     error: favoritesError,
   } = useSelector((state: RootState) => state.favorites);
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasLoadedFavorites, setHasLoadedFavorites] = useState(false);
@@ -156,7 +158,6 @@ export default function CardBook({ novel }: CardNovelProps) {
       });
       router.push("/novels");
       // Opcional: recargar la página o actualizar la lista de novelas
-      
     } catch (error) {
       console.error("Error al eliminar novela:", error);
       toast.error("Error al eliminar la novela");
@@ -183,10 +184,19 @@ export default function CardBook({ novel }: CardNovelProps) {
 
   const navigateToBook = async () => {
     try {
-      const chapters = await dispatch(getChaptersAsync(novel.id));
-      if (chapters && chapters.length > 0) {
-        // Ordenar capítulos por número y obtener el primero
-        const firstChapter = chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)[0];
+      const result = await dispatch(getChaptersAsync(novel.id));
+
+      // Extract chapters from the action result
+      // This depends on your Redux action structure - adjust accordingly
+      const chapters = result; // Adjust based on your action structure
+
+      if (chapters && Array.isArray(chapters) && chapters.length > 0) {
+        // Create a copy of the array before sorting to avoid mutating the original
+        const sortedChapters = [...chapters].sort(
+          (a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number
+        );
+        const firstChapter = sortedChapters[0];
+
         router.push(`/books/${novel.id}/chapters/${firstChapter.id}`);
       } else {
         toast.error("No hay capítulos disponibles");
@@ -222,7 +232,7 @@ export default function CardBook({ novel }: CardNovelProps) {
               className="object-cover rounded-sm hover:opacity-80 transition-opacity"
             />
           </div>
-          
+
           {/* Categoría y Descripción - Mobile: orden 3, Desktop: columna 2-3 */}
           <div className="text-xs text-muted-foreground md:text-left order-3 md:order-3 md:col-span-2">
             <p
@@ -231,7 +241,7 @@ export default function CardBook({ novel }: CardNovelProps) {
             >
               {description || "Sin descripción"}
             </p>
-            <p>Categoría: {category || "Sin categoría"}</p> 
+            <p>Categoría: {category || "Sin categoría"}</p>
           </div>
 
           {/* Botones principales (Leer y Favoritos) - Mobile: orden 4, Desktop: columna 2-3 */}
@@ -242,7 +252,7 @@ export default function CardBook({ novel }: CardNovelProps) {
             >
               Leer
             </Button>
-            
+
             {isAuthenticated ? (
               <Button
                 variant={isFavorite ? "secondary" : "outline"}
@@ -322,11 +332,15 @@ export default function CardBook({ novel }: CardNovelProps) {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          ¿Estás completamente seguro?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta acción no se puede deshacer. Esto eliminará permanentemente la novela
-                          <strong> {title} </strong>
-                          y todos sus capítulos asociados de nuestros servidores, incluyendo la imagen almacenada en Cloudinary.
+                          Esta acción no se puede deshacer. Esto eliminará
+                          permanentemente la novela
+                          <strong> {title} </strong>y todos sus capítulos
+                          asociados de nuestros servidores, incluyendo la imagen
+                          almacenada en Cloudinary.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

@@ -7,7 +7,9 @@ import FavoriteCard from "../FavoriteCard";
 
 export default function FavoriteList() {
   const dispatch = useDispatch();
-  const { favorites, loading, error } = useSelector((state: RootState) => state.favorites);
+  const { favorites, loading, error } = useSelector(
+    (state: RootState) => state.favorites
+  );
   console.log("Favorites:", favorites);
 
   useEffect(() => {
@@ -27,7 +29,9 @@ export default function FavoriteList() {
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Mis Favoritos</h1>
       {favorites.length === 0 ? (
-        <p className="text-center text-gray-500">No tienes novelas en tus favoritos.</p>
+        <p className="text-center text-gray-500">
+          No tienes novelas en tus favoritos.
+        </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map((favorite) => (

@@ -29,7 +29,10 @@ const PageSkeleton = () => (
     <div className="w-full max-w-7xl">
       <div className="w-full grid grid-cols-1 gap-4 p-4 place-content-center">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="overflow-hidden bg-background shadow-sm rounded-lg">
+          <div
+            key={index}
+            className="overflow-hidden bg-background shadow-sm rounded-lg"
+          >
             <div className="flex p-4 gap-4">
               <div className="flex-shrink-0">
                 <div className="w-20 h-20 bg-gray-200 rounded-sm"></div>
@@ -57,13 +60,13 @@ export default function Novels() {
   const novels = useSelector((state: RootState) => state.novels.novels);
   const { loading } = useSelector((state: RootState) => state.novels);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  
+
   useEffect(() => {
     // Cargar novelas si aún no están cargadas
     if (novels.length === 0) {
       dispatch(getNovelsAsync());
     }
-    
+
     // Cargar favoritos si el usuario está autenticado
     if (isAuthenticated) {
       dispatch(getFavoritesAsync());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
@@ -35,6 +35,65 @@ export default function EditChapterPage() {
   const isModerator = user?.role === "Moderator";
   const canEditChapter = isAdmin || isModerator;
 
+  const loadNovel = useCallback(async () => {
+    try {
+      setIsLoadingNovel(true);
+
+      // Primero buscar en el estado local
+      const existingNovel = novels.find(novel => novel.id === Number(novelId));
+      
+      if (existingNovel) {
+        setCurrentNovel(existingNovel);
+        setIsLoadingNovel(false);
+        return;
+      }
+
+      // Si no está en el estado, obtenerla del servidor
+      const novel = await dispatch(getNovelByIdAsync(novelId));
+      if (novel) {
+        setCurrentNovel(novel);
+      }
+      
+    } catch (error) {
+      console.error("Error al cargar la novela:", error);
+      throw new Error("No se pudo cargar la información de la novela");
+    } finally {
+      setIsLoadingNovel(false);
+    }
+  }, [novels, novelId, dispatch]);
+
+  const loadChapter = useCallback(async () => {
+    try {
+      setIsLoadingChapter(true);
+      
+      // Obtener el capítulo del servidor
+      await dispatch(getChapterAsync(Number(novelId), Number(chapterId)));
+      
+    } catch (error) {
+      console.error("Error al cargar el capítulo:", error);
+      throw new Error("No se pudo cargar la información del capítulo");
+    } finally {
+      setIsLoadingChapter(false);
+    }
+  }, [novelId, chapterId, dispatch]);
+
+  const loadData = useCallback(async () => {
+    try {
+      setError(null);
+      
+      // Cargar novela y capítulo en paralelo
+      await Promise.all([
+        loadNovel(),
+        loadChapter()
+      ]);
+      
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      setError("No se pudieron cargar los datos necesarios");
+      toast.error("Error al cargar los datos");
+    }
+  }, [loadNovel, loadChapter]);
+
   useEffect(() => {
     // Verificar autenticación
     if (!isAuthenticated) {
@@ -66,64 +125,7 @@ export default function EditChapterPage() {
     }
 
     loadData();
-  }, [isAuthenticated, canEditChapter, novelId, chapterId, router]);
-
-  const loadData = async () => {
-    try {
-      setError(null);
-      
-      // Cargar novela y capítulo en paralelo
-      await Promise.all([
-        loadNovel(),
-        loadChapter()
-      ]);
-      
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
-      setError("No se pudieron cargar los datos necesarios");
-      toast.error("Error al cargar los datos");
-    }
-  };
-
-  const loadNovel = async () => {
-    try {
-      setIsLoadingNovel(true);
-
-      // Primero buscar en el estado local
-      const existingNovel = novels.find(novel => novel.id === Number(novelId));
-      
-      if (existingNovel) {
-        setCurrentNovel(existingNovel);
-        setIsLoadingNovel(false);
-        return;
-      }
-
-      // Si no está en el estado, obtenerla del servidor
-      const novel = await dispatch(getNovelByIdAsync(novelId));
-      setCurrentNovel(novel);
-      
-    } catch (error) {
-      console.error("Error al cargar la novela:", error);
-      throw new Error("No se pudo cargar la información de la novela");
-    } finally {
-      setIsLoadingNovel(false);
-    }
-  };
-
-  const loadChapter = async () => {
-    try {
-      setIsLoadingChapter(true);
-      
-      // Obtener el capítulo del servidor
-      await dispatch(getChapterAsync(Number(novelId), Number(chapterId)));
-      
-    } catch (error) {
-      console.error("Error al cargar el capítulo:", error);
-      throw new Error("No se pudo cargar la información del capítulo");
-    } finally {
-      setIsLoadingChapter(false);
-    }
-  };
+  }, [isAuthenticated, canEditChapter, novelId, chapterId, router, loadData]);
 
   // Mostrar loading mientras se verifica autenticación y se cargan los datos
   if (!isAuthenticated || isLoadingNovel || isLoadingChapter) {
