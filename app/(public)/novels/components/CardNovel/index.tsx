@@ -5,10 +5,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { addFavoriteAsync } from "@/service/favorites/favoritesService";
-import { useEffect, useState, useRef } from "react";
+import {
+  addFavoriteAsync,
+  removeFavoriteAsync,
+  getFavoritesAsync,
+} from "@/service/favorites/favoritesService";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { selectIsOperationLoading } from "@/store/slices/favoritesSlice";
 
 interface CardNovelProps {
   novel: Novel;
@@ -18,55 +24,61 @@ export default function CardNovel({ novel }: CardNovelProps) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  const { favorites, loading: favoritesLoading } = useSelector(
-    (state: RootState) => state.favorites
-  );
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const {
+    favorites,
+    loading: favoritesLoading,
+    error: favoritesError,
+  } = useSelector((state: RootState) => state.favorites);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
-  const [isLocalFavorite, setIsLocalFavorite] = useState(false);
-  const [isAddingFavorite, setIsAddingFavorite] = useState(false);
-  const hasAddedRef = useRef(false);
+  const isFavorite = favorites.some((fav) => fav.novel_id === novel.id);
+
+  // Estado de carga por operación
+  const addOperationKey = user?.id ? `${user.id}-${novel.id}-add` : '';
+  const removeOperationKey = user?.id ? `${user.id}-${novel.id}-remove` : '';
+  const isAddingFavorite = useSelector(selectIsOperationLoading(addOperationKey));
+  const isRemovingFavorite = useSelector(selectIsOperationLoading(removeOperationKey));
+  const isFavoriteOperationLoading = isAddingFavorite || isRemovingFavorite;
+
+  // Cargar favoritos cuando el usuario esté autenticado
+  useEffect(() => {
+    if (isAuthenticated && user?.id && !favoritesLoading) {
+      dispatch(getFavoritesAsync());
+    }
+  }, [dispatch, isAuthenticated, user?.id]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const favoriteExists = favorites.some((fav) => fav.novel_id === novel.id);
-      setIsLocalFavorite(favoriteExists);
-    } else {
-      setIsLocalFavorite(false);
+    if (favoritesError) {
+      toast.error("Error al gestionar favoritos");
     }
-  }, [favorites, novel.id, isAuthenticated]);
+  }, [favoritesError]);
 
-  const buttonDisabled =
-    isLocalFavorite ||
-    isAddingFavorite ||
-    favoritesLoading ||
-    hasAddedRef.current;
-
-  const handleAddFavorite = async () => {
+  const handleFavoriteAction = async () => {
     if (!isAuthenticated) {
       toast.warning("Debes iniciar sesión para añadir a favoritos");
       router.push("/login");
       return;
     }
 
-    if (isLocalFavorite || hasAddedRef.current) return;
-
-    hasAddedRef.current = true;
-    setIsAddingFavorite(true);
+    if (isFavoriteOperationLoading) return;
 
     try {
-      setIsLocalFavorite(true);
-      await dispatch(addFavoriteAsync(novel.id));
-      toast.success("Novela añadida a la estantería", {
-        position: "top-right",
-      });
+      if (isFavorite) {
+        // Encontrar el favorito para obtener su ID
+        const favoriteItem = favorites.find(
+          (fav) => fav.novel_id === novel.id
+        );
+        if (favoriteItem) {
+          await dispatch(removeFavoriteAsync(favoriteItem.id));
+          toast.warning("Novela eliminada de la estantería");
+        }
+      } else {
+        await dispatch(addFavoriteAsync(novel.id));
+        toast.success("Novela añadida a la estantería");
+      }
     } catch (error) {
-      setIsLocalFavorite(false);
-      hasAddedRef.current = false;
-      console.error("Failed to add favorite:", error);
-      toast.error("Error al añadir a favoritos");
-    } finally {
-      setIsAddingFavorite(false);
+      console.error("Error al gestionar favoritos:", error);
+      toast.error("Error al gestionar favoritos");
     }
   };
 
@@ -79,10 +91,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
   return (
     <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow">
       <div className="flex p-4 gap-4">
-        <div 
-          className="flex-shrink-0 cursor-pointer" 
-          onClick={navigateToBook}
-        >
+        <div className="flex-shrink-0 cursor-pointer" onClick={navigateToBook}>
           <Image
             src={image || "/placeholder.svg"}
             alt={title || "Portada de novela sin título"}
@@ -91,7 +100,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
             className="object-cover rounded-sm hover:opacity-80 transition-opacity"
           />
         </div>
-        
+
         <div className="flex-grow space-y-2">
           <h3
             className="font-bold text-lg leading-tight line-clamp-1 text-foreground cursor-pointer hover:text-primary transition-colors"
@@ -116,29 +125,32 @@ export default function CardNovel({ novel }: CardNovelProps) {
         </div>
 
         <div className="hidden md:flex flex-col gap-2 justify-center ml-auto">
-          <Button 
+          <Button
             className="bg-red-600 hover:bg-red-700 text-white"
             onClick={navigateToBook}
           >
             Haga clic para leer
           </Button>
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <Button
               variant="outline"
               className={`border-border text-foreground ${
-                isLocalFavorite ? "bg-muted" : ""
+                isFavorite
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
               }`}
-              onClick={handleAddFavorite}
-              disabled={buttonDisabled}
+              onClick={handleFavoriteAction}
+              disabled={isFavoriteOperationLoading}
             >
-              {isAddingFavorite
-                ? "Añadiendo..."
-                : hasAddedRef.current || isLocalFavorite
-                ? "En la estantería"
-                : "Añadir a la estantería"}
+              {isFavoriteOperationLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : isFavorite ? (
+                "En la estantería"
+              ) : (
+                "Añadir a la estantería"
+              )}
             </Button>
-          )}
-          {!isAuthenticated && (
+          ) : (
             <Button
               variant="outline"
               className="border-gray-300"

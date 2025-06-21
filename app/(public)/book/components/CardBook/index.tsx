@@ -9,7 +9,7 @@ import {
   getFavoritesAsync,
 } from "@/service/favorites/favoritesService";
 import { deleteNovelAsync } from "@/service/novels/novelsService";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2, Edit, Plus, Loader2 } from "lucide-react";
@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getChaptersAsync } from "@/service/chapter/chapterService";
+import { selectIsOperationLoading } from "@/store/slices/favoritesSlice";
 
 interface CardNovelProps {
   novel: Novel;
@@ -43,11 +44,7 @@ export default function CardBook({ novel }: CardNovelProps) {
     (state: RootState) => state.auth
   );
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [hasLoadedFavorites, setHasLoadedFavorites] = useState(false);
   const [isDeletingNovel, setIsDeletingNovel] = useState(false);
-
-  const hasProcessedRef = useRef(false);
 
   // Verificar roles del usuario
   const isAdmin = user?.role === "Admin";
@@ -55,56 +52,27 @@ export default function CardBook({ novel }: CardNovelProps) {
   const canManageNovel = isAdmin; // Solo admin puede editar/eliminar
   const canAddChapter = isAdmin || isModerator; // Admin y moderator pueden añadir capítulos
 
-  const isFavorite =
-    isAuthenticated &&
-    favorites.some((fav) => {
-      const favNovelId = String(fav.novel_id);
-      const currentNovelId = String(novel.id);
-      return favNovelId === currentNovelId;
-    });
+  const isFavorite = favorites.some((fav) => fav.novel_id === novel.id);
 
+  // Estado de carga por operación
+  const addOperationKey = user?.id ? `${user.id}-${novel.id}-add` : '';
+  const removeOperationKey = user?.id ? `${user.id}-${novel.id}-remove` : '';
+  const isAddingFavorite = useSelector(selectIsOperationLoading(addOperationKey));
+  const isRemovingFavorite = useSelector(selectIsOperationLoading(removeOperationKey));
+  const isFavoriteOperationLoading = isAddingFavorite || isRemovingFavorite;
+
+  // Cargar favoritos cuando el usuario esté autenticado
   useEffect(() => {
-    if (isAuthenticated && !hasLoadedFavorites && !favoritesLoading) {
+    if (isAuthenticated && user?.id && !favoritesLoading) {
       dispatch(getFavoritesAsync());
-      setHasLoadedFavorites(true);
     }
-
-    if (!isAuthenticated) {
-      setHasLoadedFavorites(false);
-    }
-  }, [dispatch, isAuthenticated, hasLoadedFavorites, favoritesLoading]);
-
-  useEffect(() => {
-    console.log("=== FAVORITO DEBUG ===");
-    console.log("novel.id:", novel.id, typeof novel.id);
-    console.log(
-      "favorites:",
-      favorites.map((f) => ({
-        id: f.id,
-        novel_id: f.novel_id,
-        novel_id_type: typeof f.novel_id,
-      }))
-    );
-    console.log("isFavorite calculated:", isFavorite);
-    console.log("favorites.length:", favorites.length);
-    console.log("====================");
-  }, [favorites, novel.id, isFavorite]);
+  }, [dispatch, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (favoritesError) {
-      toast.error("Error al cargar favoritos");
+      toast.error("Error al gestionar favoritos");
     }
   }, [favoritesError]);
-
-  useEffect(() => {
-    if (isProcessing && !favoritesLoading) {
-      const timer = setTimeout(() => {
-        setIsProcessing(false);
-        hasProcessedRef.current = false;
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [favorites, isProcessing, favoritesLoading]);
 
   const handleFavoriteAction = async () => {
     if (!isAuthenticated) {
@@ -113,34 +81,25 @@ export default function CardBook({ novel }: CardNovelProps) {
       return;
     }
 
-    if (hasProcessedRef.current || isProcessing) return;
-
-    hasProcessedRef.current = true;
-    setIsProcessing(true);
+    if (isFavoriteOperationLoading) return;
 
     try {
       if (isFavorite) {
+        // Encontrar el favorito para obtener su ID
         const favoriteItem = favorites.find(
-          (fav) => String(fav.novel_id) === String(novel.id)
+          (fav) => fav.novel_id === novel.id
         );
-
         if (favoriteItem) {
           await dispatch(removeFavoriteAsync(favoriteItem.id));
-          toast.warning("Novela eliminada de la estantería", {
-            position: "top-right",
-          });
+          toast.warning("Novela eliminada de la estantería");
         }
       } else {
         await dispatch(addFavoriteAsync(novel.id));
-        toast.success("Novela añadida a la estantería", {
-          position: "top-right",
-        });
+        toast.success("Novela añadida a la estantería");
       }
     } catch (error) {
       console.error("Error al gestionar favoritos:", error);
       toast.error("Error al gestionar favoritos");
-      setIsProcessing(false);
-      hasProcessedRef.current = false;
     }
   };
 
@@ -157,7 +116,6 @@ export default function CardBook({ novel }: CardNovelProps) {
         position: "top-right",
       });
       router.push("/novels");
-      // Opcional: recargar la página o actualizar la lista de novelas
     } catch (error) {
       console.error("Error al eliminar novela:", error);
       toast.error("Error al eliminar la novela");
@@ -184,14 +142,9 @@ export default function CardBook({ novel }: CardNovelProps) {
 
   const navigateToBook = async () => {
     try {
-      const result = await dispatch(getChaptersAsync(novel.id));
-
-      // Extract chapters from the action result
-      // This depends on your Redux action structure - adjust accordingly
-      const chapters = result; // Adjust based on your action structure
+      const chapters = await dispatch(getChaptersAsync(novel.id));
 
       if (chapters && Array.isArray(chapters) && chapters.length > 0) {
-        // Create a copy of the array before sorting to avoid mutating the original
         const sortedChapters = [...chapters].sort(
           (a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number
         );
@@ -199,11 +152,11 @@ export default function CardBook({ novel }: CardNovelProps) {
 
         router.push(`/books/${novel.id}/chapters/${firstChapter.id}`);
       } else {
-        toast.error("No hay capítulos disponibles");
+        toast.info("Esta novela aún no tiene capítulos.");
       }
     } catch (error) {
-      console.error("Error al obtener capítulos:", error);
-      toast.error("Error al cargar los capítulos");
+      console.error("Error al obtener los capítulos:", error);
+      toast.error("No se pudieron cargar los capítulos.");
     }
   };
 
@@ -262,17 +215,15 @@ export default function CardBook({ novel }: CardNovelProps) {
                     : "text-foreground"
                 }`}
                 onClick={handleFavoriteAction}
-                disabled={isProcessing || favoritesLoading}
+                disabled={isFavoriteOperationLoading}
               >
-                {favoritesLoading
-                  ? "Cargando..."
-                  : isProcessing
-                  ? isFavorite
-                    ? "Eliminando..."
-                    : "Añadiendo..."
-                  : isFavorite
-                  ? "Eliminar de la estantería"
-                  : "Añadir a la estantería"}
+                {isFavoriteOperationLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : isFavorite ? (
+                  "Eliminar de la estantería"
+                ) : (
+                  "Añadir a la estantería"
+                )}
               </Button>
             ) : (
               <Button
