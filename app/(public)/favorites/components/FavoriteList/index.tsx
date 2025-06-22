@@ -1,21 +1,13 @@
 "use client";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { getFavoritesAsync } from "@/service/favorites/favoritesService";
 import FavoriteCard from "../FavoriteCard";
 
 export default function FavoriteList() {
-  const dispatch = useDispatch();
   const { favorites, loading, error } = useSelector(
     (state: RootState) => state.favorites
   );
   console.log("Favorites:", favorites);
-
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dispatch(getFavoritesAsync() as any);
-  }, [dispatch]);
 
   if (loading) {
     return <div className="text-center py-8">Cargando favoritos...</div>;
