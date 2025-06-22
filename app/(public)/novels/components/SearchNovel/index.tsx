@@ -1,7 +1,7 @@
 // components/SearchNovel.tsx
 "use client";
 
-import { useState, Suspense, lazy, useMemo } from "react";
+import { useState, Suspense, lazy } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -43,32 +43,43 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const novels = useMemo(() => initialNovels || [], [initialNovels]);
+  // Proteger contra undefined/null
+  const novels = Array.isArray(initialNovels) ? initialNovels : [];
 
-  // Memoizar las categorías para evitar recalcular en cada render
-  const categories = useMemo(() => 
-    Array.from(
-      new Set(
-        novels
-          .map((novel) => novel.category)
-          .filter((category): category is string => category !== null && category !== undefined)
-      )
-    ), [novels]
+  // Proteger contra novels undefined - calcular directamente las categorías
+  const categories = Array.from(
+    new Set(
+      novels
+        .map((novel) => novel?.category)
+        .filter((category): category is string => 
+          category !== null && 
+          category !== undefined && 
+          typeof category === 'string'
+        )
+    )
   );
 
-  // Memoizar las novelas filtradas para mejor rendimiento
-  const filteredNovels = useMemo(() => 
-    novels.filter((novel) => {
-      const matchesTitle = novel.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory ? novel.category === selectedCategory : true;
-      return matchesTitle && matchesCategory;
-    }), [novels, searchTerm, selectedCategory]
-  );
+  // Filtrar directamente con protección
+  const filteredNovels = novels.filter((novel) => {
+    if (!novel) return false;
+    
+    const matchesTitle = novel.title?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false;
+    const matchesCategory = selectedCategory ? novel.category === selectedCategory : true;
+    return matchesTitle && matchesCategory;
+  });
 
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedCategory(null);
   };
+
+  console.log(`🔍 SearchNovel render:`, {
+    initialNovels: initialNovels?.length || 0,
+    novels: novels.length,
+    filteredNovels: filteredNovels.length,
+    searchTerm,
+    selectedCategory
+  });
 
   return (
     <div className="w-full flex flex-col items-center p-4">
@@ -99,13 +110,15 @@ export default function SearchNovel({ initialNovels }: SearchNovelProps) {
             {category}
           </Button>
         ))}
-        <Button
-          variant="outline"
-          onClick={clearFilters}
-          className="rounded-full text-sm border-gray-300 hover:bg-gray-100"
-        >
-          Limpiar Filtros
-        </Button>
+        {categories.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={clearFilters}
+            className="rounded-full text-sm border-gray-300 hover:bg-gray-100"
+          >
+            Limpiar Filtros
+          </Button>
+        )}
       </div>
 
       {/* Lista de novelas filtradas con lazy loading */}
