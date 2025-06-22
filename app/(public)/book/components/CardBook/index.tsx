@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   addFavoriteAsync,
   removeFavoriteAsync,
-  getFavoritesAsync,
 } from "@/service/favorites/favoritesService";
 import { deleteNovelAsync } from "@/service/novels/novelsService";
 import { useEffect, useState } from "react";
@@ -37,7 +36,6 @@ export default function CardBook({ novel }: CardNovelProps) {
 
   const {
     favorites,
-    loading: favoritesLoading,
     error: favoritesError,
   } = useSelector((state: RootState) => state.favorites);
   const { isAuthenticated, user } = useSelector(
@@ -60,13 +58,6 @@ export default function CardBook({ novel }: CardNovelProps) {
   const isAddingFavorite = useSelector(selectIsOperationLoading(addOperationKey));
   const isRemovingFavorite = useSelector(selectIsOperationLoading(removeOperationKey));
   const isFavoriteOperationLoading = isAddingFavorite || isRemovingFavorite;
-
-  // Cargar favoritos cuando el usuario esté autenticado
-  useEffect(() => {
-    if (isAuthenticated && user?.id && !favoritesLoading) {
-      dispatch(getFavoritesAsync());
-    }
-  }, [dispatch, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (favoritesError) {

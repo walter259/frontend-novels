@@ -7,12 +7,10 @@ import Image from "next/image";
 import {
   addFavoriteAsync,
   removeFavoriteAsync,
-  getFavoritesAsync,
 } from "@/service/favorites/favoritesService";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 interface CardNovelProps {
   novel: Novel;
@@ -59,12 +57,6 @@ export default function CardNovel({ novel }: CardNovelProps) {
     buttonText,
     favoriteItem: favoriteItem?.id
   });
-
-  useEffect(() => {
-    if (isAuthenticated && user?.id && !favoritesLoading) {
-      dispatch(getFavoritesAsync());
-    }
-  }, [dispatch, isAuthenticated, user?.id]);
 
   const handleClick = async () => {
     console.log(`🟨 CLICK Novel ${novel.id}:`, { isFavorite, isLoading });
