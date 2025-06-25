@@ -243,7 +243,9 @@ export const addFavoriteAsync = (novelId: number) =>
       if (userCache) {
         const existsInCache = userCache.favorites.some(fav => fav.novel_id === novelId);
         if (!existsInCache) {
-          userCache.favorites.push(favorite);
+          // No mutar el array, crear uno nuevo para evitar error de "not extensible"
+          userCache.favorites = [...userCache.favorites, favorite];
+          console.log(`📦 Updated cache: added favorite to user ${userId} cache`);
         }
       }
       dispatch(setOperationLoading({ operation: operationKey, loading: false }));
