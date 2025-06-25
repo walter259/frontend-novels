@@ -193,7 +193,7 @@ export const getFavoritesAsync =
   };
 
 // Añadir una novela a favoritos (ARREGLADO - sin verificación prematura)
-export const addFavoriteAsync = (novelId: number) => 
+export const addFavoriteAsync = (novel: Novel) => 
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
     const currentUser = state.auth.user;
@@ -210,21 +210,20 @@ export const addFavoriteAsync = (novelId: number) =>
       return;
     }
 
-    const operationKey = createOperationKey(userId, novelId, 'add');
+    const operationKey = createOperationKey(userId, novel.id, 'add');
 
     // Actualización optimista: si no existe, añadir localmente antes de la petición
     let optimisticallyAdded = false;
     let tempFavorite: Favorite | undefined = undefined;
-    const alreadyExists = state.favorites.favorites.some(fav => fav.novel_id === novelId);
+    const alreadyExists = state.favorites.favorites.some(fav => fav.novel_id === novel.id);
     if (!alreadyExists) {
-      // Crea un favorito temporal con los campos mínimos requeridos
       tempFavorite = {
         id: Date.now(), // id temporal
-        novel_id: novelId,
+        novel_id: novel.id,
         user_id: userId,
-        novel: null, // o {} si tu modelo lo permite
-        image: "",
-        // agrega otros campos requeridos por tu modelo aquí
+        novel: novel, // Aquí va el objeto completo
+        image: novel.image || "",
+        // ...otros campos si necesitas
       } as unknown as Favorite;
       dispatch(addFavorite(tempFavorite));
       optimisticallyAdded = true;
@@ -233,7 +232,7 @@ export const addFavoriteAsync = (novelId: number) =>
     try {
       dispatch(setOperationLoading({ operation: operationKey, loading: true }));
       const response = await api.post<AddFavoriteResponse>(
-        `/users/${userId}/novels/${novelId}/favorites`
+        `/users/${userId}/novels/${novel.id}/favorites`
       );
       const favorite = response.data.favorite;
       // Reemplaza el favorito temporal por el real
@@ -241,32 +240,27 @@ export const addFavoriteAsync = (novelId: number) =>
       // Actualiza el cache si aplica
       const userCache = userCacheMap.get(userId);
       if (userCache) {
-        const existsInCache = userCache.favorites.some(fav => fav.novel_id === novelId);
+        const existsInCache = userCache.favorites.some(fav => fav.novel_id === novel.id);
         if (!existsInCache) {
-          // No mutar el array, crear uno nuevo para evitar error de "not extensible"
           userCache.favorites = [...userCache.favorites, favorite];
-          console.log(`📦 Updated cache: added favorite to user ${userId} cache`);
         }
       }
       dispatch(setOperationLoading({ operation: operationKey, loading: false }));
       return favorite;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
-        // Si ya existe y lo tenemos localmente, no resincronizar
         if (optimisticallyAdded) {
           dispatch(setOperationLoading({ operation: operationKey, loading: false }));
           return;
         } else {
-          // Si no lo tenemos localmente, resincroniza
           dispatch(getFavoritesAsync());
           dispatch(setOperationLoading({ operation: operationKey, loading: false }));
           return;
         }
       }
-      // Si hay error y se añadió optimistamente, revertir
       if (optimisticallyAdded && tempFavorite) {
         const currentState = getState();
-        const temp = currentState.favorites.favorites.find(fav => fav.novel_id === novelId && fav.id === tempFavorite!.id);
+        const temp = currentState.favorites.favorites.find(fav => fav.novel_id === novel.id && fav.id === tempFavorite!.id);
         if (temp) {
           dispatch(removeFavorite(temp.id));
         }

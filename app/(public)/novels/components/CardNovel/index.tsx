@@ -75,7 +75,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
         toast.success("Eliminado de la estantería");
       } else {
         console.log(`🟨 ADDING favorite for novel ${novel.id}...`);
-        await dispatch(addFavoriteAsync(novel.id));
+        await dispatch(addFavoriteAsync(novel));
         toast.success("Añadido a la estantería");
       }
     } catch (error) {
