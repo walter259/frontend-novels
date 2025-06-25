@@ -18,14 +18,14 @@ export default function FavoriteList() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 w-full">
       <h1 className="text-3xl font-bold mb-6">Mis Favoritos</h1>
       {favorites.length === 0 ? (
         <p className="text-center text-gray-500">
           No tienes novelas en tus favoritos.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map((favorite) => (
             <FavoriteCard key={favorite.id} favorite={favorite} />
           ))}

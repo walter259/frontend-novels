@@ -104,7 +104,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
           <div className="text-xs text-muted-foreground">
             {novel.category || "Sin categoría"}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground line-clamp-3">
             {novel.description || "Sin descripción"}
           </p>
         </div>

@@ -1,4 +1,4 @@
-import { Home, Package, Folder } from "lucide-react";
+import { Home, LibraryBig } from "lucide-react";
 import { useMemo } from "react";
 
 export default function useNavigationData() {
@@ -11,22 +11,9 @@ export default function useNavigationData() {
       },
       {
         id: 2,
-        title: "Explorar",
-        link: "/product",
-        icon: Package, 
-      },
-      {
-        id: 3,
-        title: "Categorias",
-        link: "/category",
-        icon: Folder,
-      },
-
-      {
-        id: 4,
-        title: "Biblioteca",
+        title: "Estantería",
         link: "/favorites",
-        icon: Folder,
+        icon: LibraryBig,
       },
   ],[]);
 
