@@ -31,16 +31,11 @@ const favoritesSlice = createSlice({
     },
 
     addFavorite(state, action: PayloadAction<Favorite>) {
-      const exists = state.favorites.some(fav => fav.novel_id === action.payload.novel_id);
-      if (!exists) {
-        state.favorites = [...state.favorites, action.payload];
-        console.log(`➕ Added favorite: novel ${action.payload.novel_id}, favorite ID ${action.payload.id}`);
-      } else {
-        console.log(`⚠️ Favorite already exists: novel ${action.payload.novel_id} - updating instead`);
-        state.favorites = state.favorites.map(fav =>
-          fav.novel_id === action.payload.novel_id ? action.payload : fav
-        );
-      }
+      // Reemplaza cualquier favorito con el mismo novel_id
+      state.favorites = [
+        ...state.favorites.filter(fav => fav.novel_id !== action.payload.novel_id),
+        action.payload
+      ];
       state.loading = false;
       state.error = null;
     },

@@ -11,6 +11,7 @@ import {
   setCurrentUserId,
   clearLoading,
   setOperationLoading,
+  updateFavorite,
 } from "@/store/slices/favoritesSlice";
 import api from "../api";
 import { AxiosError } from "axios";
@@ -235,8 +236,12 @@ export const addFavoriteAsync = (novel: Novel) =>
         `/users/${userId}/novels/${novel.id}/favorites`
       );
       const favorite = response.data.favorite;
-      // Reemplaza el favorito temporal por el real
-      dispatch(addFavorite(favorite));
+      if (optimisticallyAdded && tempFavorite) {
+        // Actualiza el favorito temporal con los datos reales
+        dispatch(updateFavorite({ ...favorite, id: tempFavorite.id }));
+      } else {
+        dispatch(addFavorite(favorite));
+      }
       // Actualiza el cache si aplica
       const userCache = userCacheMap.get(userId);
       if (userCache) {
