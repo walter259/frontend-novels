@@ -52,10 +52,11 @@ export default function CardBook({ novel }: CardNovelProps) {
 
   // Selector robusto por novel_id (evita problemas de tipo)
   const isFavorite = favorites.some(fav => Number(fav.novel_id) === Number(novel.id));
+  const favoriteItem = favorites.find(fav => Number(fav.novel_id) === Number(novel.id));
 
   // Estado de carga por operación
-  const addOperationKey = user?.id ? `${user.id}-${novel.id}-add` : '';
-  const removeOperationKey = user?.id ? `${user.id}-${novel.id}-remove` : '';
+  const addOperationKey = user?.id ? `${user.id}-${Number(novel.id)}-add` : '';
+  const removeOperationKey = user?.id ? `${user.id}-${Number(novel.id)}-remove` : '';
   const isAddingFavorite = useSelector(selectIsOperationLoading(addOperationKey));
   const isRemovingFavorite = useSelector(selectIsOperationLoading(removeOperationKey));
   const isFavoriteOperationLoading = isAddingFavorite || isRemovingFavorite;
@@ -76,15 +77,10 @@ export default function CardBook({ novel }: CardNovelProps) {
     if (isFavoriteOperationLoading) return;
 
     try {
-      if (isFavorite) {
+      if (isFavorite && favoriteItem) {
         // Encontrar el favorito para obtener su ID
-        const favoriteItem = favorites.find(
-          (fav) => fav.novel_id === novel.id
-        );
-        if (favoriteItem) {
-          await dispatch(removeFavoriteAsync(favoriteItem.id));
-          toast.warning("Novela eliminada de la estantería");
-        }
+        await dispatch(removeFavoriteAsync(favoriteItem.id));
+        toast.warning("Novela eliminada de la estantería");
       } else {
         await dispatch(addFavoriteAsync(novel));
         toast.success("Novela añadida a la estantería");
