@@ -50,7 +50,8 @@ export default function CardBook({ novel }: CardNovelProps) {
   const canManageNovel = isAdmin; // Solo admin puede editar/eliminar
   const canAddChapter = isAdmin || isModerator; // Admin y moderator pueden añadir capítulos
 
-  const isFavorite = favorites.some((fav) => fav.novel_id === novel.id);
+  // Selector robusto por novel_id (evita problemas de tipo)
+  const isFavorite = favorites.some(fav => Number(fav.novel_id) === Number(novel.id));
 
   // Estado de carga por operación
   const addOperationKey = user?.id ? `${user.id}-${novel.id}-add` : '';

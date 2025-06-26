@@ -11,7 +11,6 @@ import {
   setCurrentUserId,
   clearLoading,
   setOperationLoading,
-  updateFavorite,
 } from "@/store/slices/favoritesSlice";
 import api from "../api";
 import { AxiosError } from "axios";
@@ -237,8 +236,8 @@ export const addFavoriteAsync = (novel: Novel) =>
       );
       const favorite = response.data.favorite;
       if (optimisticallyAdded && tempFavorite) {
-        // Actualiza el favorito temporal con los datos reales
-        dispatch(updateFavorite({ ...favorite, id: tempFavorite.id }));
+        dispatch(removeFavorite(tempFavorite.id));
+        dispatch(addFavorite(favorite));
       } else {
         dispatch(addFavorite(favorite));
       }

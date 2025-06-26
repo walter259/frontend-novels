@@ -29,8 +29,8 @@ export default function CardNovel({ novel }: CardNovelProps) {
     favoritesLoading: state.favorites.loading,
   }));
 
-  // Cálculo directo sin useMemo innecesario
-  const favoriteItem = favorites.find(fav => fav.novel_id === novel.id);
+  // Selector robusto por novel_id (evita problemas de tipo)
+  const favoriteItem = favorites.find(fav => Number(fav.novel_id) === Number(novel.id));
   const isFavorite = !!favoriteItem;
   
   const addKey = user?.id ? `${user.id}-${novel.id}-add` : '';
