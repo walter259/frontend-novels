@@ -27,30 +27,25 @@ const favoritesSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.hasInitialized = true;
-      console.log(`📚 Set favorites: ${action.payload.length} items`);
     },
 
     addFavorite(state, action: PayloadAction<Favorite>) {
       // Reemplaza cualquier favorito con el mismo novel_id
       state.favorites = [
-        ...state.favorites.filter(fav => fav.novel_id !== action.payload.novel_id),
-        action.payload
+        ...state.favorites.filter(
+          (fav) => fav.novel_id !== action.payload.novel_id
+        ),
+        action.payload,
       ];
       state.loading = false;
       state.error = null;
     },
 
     removeFavorite(state, action: PayloadAction<number>) {
-      const beforeCount = state.favorites.length;
-      state.favorites = state.favorites.filter((favorite) => favorite.id !== action.payload);
-      const afterCount = state.favorites.length;
-      
-      if (beforeCount > afterCount) {
-        console.log(`➖ Removed favorite: ID ${action.payload}`);
-      } else {
-        console.log(`⚠️ Favorite not found to remove: ID ${action.payload}`);
-      }
-      
+      state.favorites = state.favorites.filter(
+        (favorite) => favorite.id !== action.payload
+      );
+
       state.loading = false;
       state.error = null;
     },
@@ -81,36 +76,39 @@ const favoritesSlice = createSlice({
       state.lastUserId = null;
       state.operationLoading = {};
       state.hasInitialized = false;
-      console.log(`🗑️ Cleared all favorites`);
     },
 
     setCurrentUserId(state, action: PayloadAction<number | null>) {
       // Si el usuario cambió, resetear el estado de inicialización
       if (state.lastUserId !== null && state.lastUserId !== action.payload) {
         state.hasInitialized = false;
-        console.log(`👤 User changed from ${state.lastUserId} to ${action.payload}`);
       }
       state.lastUserId = action.payload;
     },
 
     updateFavorite(state, action: PayloadAction<Favorite>) {
-      const index = state.favorites.findIndex(fav => fav.id === action.payload.id);
+      const index = state.favorites.findIndex(
+        (fav) => fav.id === action.payload.id
+      );
       if (index >= 0) {
-        state.favorites[index] = { ...state.favorites[index], ...action.payload };
-        console.log(`🔄 Updated favorite: ID ${action.payload.id}`);
+        state.favorites[index] = {
+          ...state.favorites[index],
+          ...action.payload,
+        };
       }
       state.loading = false;
       state.error = null;
     },
 
-    setOperationLoading(state, action: PayloadAction<{ operation: string; loading: boolean }>) {
+    setOperationLoading(
+      state,
+      action: PayloadAction<{ operation: string; loading: boolean }>
+    ) {
       const { operation, loading } = action.payload;
       if (loading) {
         state.operationLoading[operation] = true;
-        console.log(`⏳ Operation started: ${operation}`);
       } else {
         delete state.operationLoading[operation];
-        console.log(`✅ Operation completed: ${operation}`);
       }
     },
 
@@ -119,19 +117,18 @@ const favoritesSlice = createSlice({
     },
 
     resetState() {
-      console.log(`🔄 Resetting favorites state`);
       return initialState;
     },
   },
 });
 
-export const { 
-  setFavorites, 
-  addFavorite, 
+export const {
+  setFavorites,
+  addFavorite,
   removeFavorite,
   setLoading,
   clearLoading,
-  setError, 
+  setError,
   clearError,
   clearFavorites,
   setCurrentUserId,
@@ -142,36 +139,51 @@ export const {
 } = favoritesSlice.actions;
 
 // Selectores básicos
-export const selectFavorites = (state: { favorites: FavoritesState }) => state.favorites.favorites;
-export const selectFavoritesLoading = (state: { favorites: FavoritesState }) => state.favorites.loading;
-export const selectFavoritesError = (state: { favorites: FavoritesState }) => state.favorites.error;
-export const selectLastUserId = (state: { favorites: FavoritesState }) => state.favorites.lastUserId;
-export const selectOperationLoading = (state: { favorites: FavoritesState }) => state.favorites.operationLoading;
-export const selectHasInitialized = (state: { favorites: FavoritesState }) => state.favorites.hasInitialized;
+export const selectFavorites = (state: { favorites: FavoritesState }) =>
+  state.favorites.favorites;
+export const selectFavoritesLoading = (state: { favorites: FavoritesState }) =>
+  state.favorites.loading;
+export const selectFavoritesError = (state: { favorites: FavoritesState }) =>
+  state.favorites.error;
+export const selectLastUserId = (state: { favorites: FavoritesState }) =>
+  state.favorites.lastUserId;
+export const selectOperationLoading = (state: { favorites: FavoritesState }) =>
+  state.favorites.operationLoading;
+export const selectHasInitialized = (state: { favorites: FavoritesState }) =>
+  state.favorites.hasInitialized;
 
 // Selectores memoizados optimizados
 export const selectIsFavoriteOptimized = createSelector(
-  [selectFavorites, (state: { favorites: FavoritesState }, novelId: number) => novelId],
+  [
+    selectFavorites,
+    (state: { favorites: FavoritesState }, novelId: number) => novelId,
+  ],
   (favorites, novelId) => {
-    const result = favorites.some(fav => fav.novel_id === novelId);
-    console.log(`🔍 isFavorite check for novel ${novelId}: ${result} (${favorites.length} total favorites)`);
+    const result = favorites.some((fav) => fav.novel_id === novelId);
+
     return result;
   }
 );
 
 export const selectFavoriteByNovelIdOptimized = createSelector(
-  [selectFavorites, (state: { favorites: FavoritesState }, novelId: number) => novelId],
-  (favorites, novelId) => favorites.find(fav => fav.novel_id === novelId)
+  [
+    selectFavorites,
+    (state: { favorites: FavoritesState }, novelId: number) => novelId,
+  ],
+  (favorites, novelId) => favorites.find((fav) => fav.novel_id === novelId)
 );
 
 // Selectores de compatibilidad
-export const selectIsFavorite = (novelId: number) => (state: { favorites: FavoritesState }) => 
-  state.favorites.favorites.some(fav => fav.novel_id === novelId);
+export const selectIsFavorite =
+  (novelId: number) => (state: { favorites: FavoritesState }) =>
+    state.favorites.favorites.some((fav) => fav.novel_id === novelId);
 
-export const selectFavoriteByNovelId = (novelId: number) => (state: { favorites: FavoritesState }) => 
-  state.favorites.favorites.find(fav => fav.novel_id === novelId);
+export const selectFavoriteByNovelId =
+  (novelId: number) => (state: { favorites: FavoritesState }) =>
+    state.favorites.favorites.find((fav) => fav.novel_id === novelId);
 
-export const selectIsOperationLoading = (operation: string) => (state: { favorites: FavoritesState }) => 
-  Boolean(state.favorites.operationLoading[operation]);
+export const selectIsOperationLoading =
+  (operation: string) => (state: { favorites: FavoritesState }) =>
+    Boolean(state.favorites.operationLoading[operation]);
 
 export default favoritesSlice.reducer;

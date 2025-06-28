@@ -45,7 +45,11 @@ const isValidUserId = (userId: number) => {
   return userId && userId > 0 && Number.isInteger(userId);
 };
 
-const createOperationKey = (userId: number, novelId: number, operation: string) => {
+const createOperationKey = (
+  userId: number,
+  novelId: number,
+  operation: string
+) => {
   return `${userId}-${novelId}-${operation}`;
 };
 
@@ -76,14 +80,12 @@ export const getFavoritesAsync =
 
     // Check for pending request
     if (pendingRequests.has(userId)) {
-      console.log(`⏳ Returning pending request for user ${userId}`);
       return pendingRequests.get(userId);
     }
 
     // Check cache
     const userCache = userCacheMap.get(userId);
     if (userCache && now - userCache.lastFetchTime < CACHE_DURATION) {
-      console.log(`📦 Using cached favorites for user ${userId}`, userCache.favorites.length);
       dispatch(setFavorites(userCache.favorites));
       return userCache.favorites;
     }
@@ -101,14 +103,13 @@ export const getFavoritesAsync =
 
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
-          console.log(`🔄 Fetching favorites for user ${userId} (attempt ${attempt + 1})`);
           dispatch(setLoading());
           dispatch(setCurrentUserId(userId));
 
-          const response = await api.get<FavoriteResponse>(`/users/${userId}/favorites`);
+          const response = await api.get<FavoriteResponse>(
+            `/users/${userId}/favorites`
+          );
           const favorites = response.data.favorites || [];
-
-          console.log(`✅ Fetched ${favorites.length} favorites for user ${userId}`);
 
           // Update cache
           userCacheMap.set(userId, {
@@ -121,7 +122,10 @@ export const getFavoritesAsync =
           return favorites;
         } catch (error) {
           lastError = error;
-          console.error(`❌ Error fetching favorites (attempt ${attempt + 1}):`, error);
+          console.error(
+            `❌ Error fetching favorites (attempt ${attempt + 1}):`,
+            error
+          );
 
           if (error instanceof AxiosError) {
             const status = error.response?.status;
@@ -193,7 +197,8 @@ export const getFavoritesAsync =
   };
 
 // Añadir una novela a favoritos (ARREGLADO - sin verificación prematura)
-export const addFavoriteAsync = (novel: Novel) => 
+export const addFavoriteAsync =
+  (novel: Novel) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
     const currentUser = state.auth.user;
@@ -210,12 +215,14 @@ export const addFavoriteAsync = (novel: Novel) =>
       return;
     }
 
-    const operationKey = createOperationKey(userId, novel.id, 'add');
+    const operationKey = createOperationKey(userId, novel.id, "add");
 
     // Actualización optimista: si no existe, añadir localmente antes de la petición
     let optimisticallyAdded = false;
     let tempFavorite: Favorite | undefined = undefined;
-    const alreadyExists = state.favorites.favorites.some(fav => fav.novel_id === novel.id);
+    const alreadyExists = state.favorites.favorites.some(
+      (fav) => fav.novel_id === novel.id
+    );
     if (!alreadyExists) {
       tempFavorite = {
         id: Date.now(), // id temporal
@@ -244,27 +251,37 @@ export const addFavoriteAsync = (novel: Novel) =>
       // Actualiza el cache si aplica
       const userCache = userCacheMap.get(userId);
       if (userCache) {
-        const existsInCache = userCache.favorites.some(fav => fav.novel_id === novel.id);
+        const existsInCache = userCache.favorites.some(
+          (fav) => fav.novel_id === novel.id
+        );
         if (!existsInCache) {
           userCache.favorites = [...userCache.favorites, favorite];
         }
       }
-      dispatch(setOperationLoading({ operation: operationKey, loading: false }));
+      dispatch(
+        setOperationLoading({ operation: operationKey, loading: false })
+      );
       return favorite;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
         if (optimisticallyAdded) {
-          dispatch(setOperationLoading({ operation: operationKey, loading: false }));
+          dispatch(
+            setOperationLoading({ operation: operationKey, loading: false })
+          );
           return;
         } else {
           dispatch(getFavoritesAsync());
-          dispatch(setOperationLoading({ operation: operationKey, loading: false }));
+          dispatch(
+            setOperationLoading({ operation: operationKey, loading: false })
+          );
           return;
         }
       }
       if (optimisticallyAdded && tempFavorite) {
         const currentState = getState();
-        const temp = currentState.favorites.favorites.find(fav => fav.novel_id === novel.id && fav.id === tempFavorite!.id);
+        const temp = currentState.favorites.favorites.find(
+          (fav) => fav.novel_id === novel.id && fav.id === tempFavorite!.id
+        );
         if (temp) {
           dispatch(removeFavorite(temp.id));
         }
@@ -276,13 +293,16 @@ export const addFavoriteAsync = (novel: Novel) =>
             }`
           : "Error adding favorite";
       dispatch(setError(errorMessage));
-      dispatch(setOperationLoading({ operation: operationKey, loading: false }));
+      dispatch(
+        setOperationLoading({ operation: operationKey, loading: false })
+      );
       throw error;
     }
   };
 
 // Eliminar favorito - ARREGLADO CON CACHE UPDATE
-export const removeFavoriteAsync = (favoriteId: number) => 
+export const removeFavoriteAsync =
+  (favoriteId: number) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
     const currentUser = state.auth.user;
@@ -299,54 +319,60 @@ export const removeFavoriteAsync = (favoriteId: number) =>
       return;
     }
 
-    const favorite = state.favorites.favorites.find(fav => fav.id === favoriteId);
+    const favorite = state.favorites.favorites.find(
+      (fav) => fav.id === favoriteId
+    );
     if (!favorite) {
-      console.log(`⚠️ Favorite ${favoriteId} not found in local state`);
       return;
     }
 
-    const operationKey = createOperationKey(userId, favorite.novel_id, 'remove');
+    const operationKey = createOperationKey(
+      userId,
+      favorite.novel_id,
+      "remove"
+    );
 
     try {
-      console.log(`➖ Removing favorite: user ${userId}, novel ${favorite.novel_id}, favoriteId ${favoriteId}`);
       dispatch(setOperationLoading({ operation: operationKey, loading: true }));
-      
-      await api.delete(`/users/${userId}/novels/${favorite.novel_id}/favorites`);
 
-      console.log(`✅ Favorite removed successfully`);
-      
+      await api.delete(
+        `/users/${userId}/novels/${favorite.novel_id}/favorites`
+      );
+
       // ACTUALIZAR ESTADO LOCAL INMEDIATAMENTE
       dispatch(removeFavorite(favoriteId));
 
       // ACTUALIZAR CACHE TAMBIÉN
       const userCache = userCacheMap.get(userId);
       if (userCache) {
-        userCache.favorites = userCache.favorites.filter(fav => fav.id !== favoriteId);
-        console.log(`📦 Updated cache: removed favorite ${favoriteId} from user ${userId} cache`);
+        userCache.favorites = userCache.favorites.filter(
+          (fav) => fav.id !== favoriteId
+        );
       }
 
       // TERMINAR LA OPERACIÓN
-      dispatch(setOperationLoading({ operation: operationKey, loading: false }));
-      
-      console.log(`🎉 REMOVE OPERATION COMPLETED for favoriteId ${favoriteId}`);
+      dispatch(
+        setOperationLoading({ operation: operationKey, loading: false })
+      );
+
       return true;
-      
     } catch (error) {
       console.error(`❌ Error removing favorite:`, error);
-      
+
       if (error instanceof AxiosError && error.response?.status === 404) {
-        console.log('⚠️ Favorite not found (404) - removing from local state anyway');
         dispatch(removeFavorite(favoriteId));
 
         // ACTUALIZAR CACHE TAMBIÉN en caso 404
         const userCache = userCacheMap.get(userId);
         if (userCache) {
-          userCache.favorites = userCache.favorites.filter(fav => fav.id !== favoriteId);
-          console.log(`📦 Updated cache (404): removed favorite ${favoriteId} from user ${userId} cache`);
+          userCache.favorites = userCache.favorites.filter(
+            (fav) => fav.id !== favoriteId
+          );
         }
 
-        dispatch(setOperationLoading({ operation: operationKey, loading: false }));
-        console.log(`🎉 REMOVE OPERATION COMPLETED (404) for favoriteId ${favoriteId}`);
+        dispatch(
+          setOperationLoading({ operation: operationKey, loading: false })
+        );
         return true;
       }
 
@@ -358,9 +384,10 @@ export const removeFavoriteAsync = (favoriteId: number) =>
           : "Error removing favorite";
 
       dispatch(setError(errorMessage));
-      dispatch(setOperationLoading({ operation: operationKey, loading: false }));
-      
-      console.log(`💥 REMOVE OPERATION FAILED for favoriteId ${favoriteId}: ${errorMessage}`);
+      dispatch(
+        setOperationLoading({ operation: operationKey, loading: false })
+      );
+
       throw error;
     }
   };
@@ -375,7 +402,9 @@ export const getFavoritesByUserIdAsync =
     }
 
     try {
-      const response = await api.get<FavoriteResponse>(`/users/${userId}/favorites`);
+      const response = await api.get<FavoriteResponse>(
+        `/users/${userId}/favorites`
+      );
       const favorites = response.data.favorites || [];
       return favorites;
     } catch (error) {

@@ -21,7 +21,13 @@ export default function CardNovel({ novel }: CardNovelProps) {
   const router = useRouter();
 
   // Selector simple sin timestamp
-  const { favorites, isAuthenticated, user, operationLoading, favoritesLoading } = useSelector((state: RootState) => ({
+  const {
+    favorites,
+    isAuthenticated,
+    user,
+    operationLoading,
+    favoritesLoading,
+  } = useSelector((state: RootState) => ({
     favorites: state.favorites.favorites,
     isAuthenticated: state.auth.isAuthenticated,
     user: state.auth.user,
@@ -30,12 +36,16 @@ export default function CardNovel({ novel }: CardNovelProps) {
   }));
 
   // Selector robusto por novel_id (evita problemas de tipo)
-  const favoriteItem = favorites.find(fav => Number(fav.novel_id) === Number(novel.id));
+  const favoriteItem = favorites.find(
+    (fav) => Number(fav.novel_id) === Number(novel.id)
+  );
   const isFavorite = !!favoriteItem;
-  
-  const addKey = user?.id ? `${user.id}-${novel.id}-add` : '';
-  const removeKey = user?.id ? `${user.id}-${novel.id}-remove` : '';
-  const isOperationLoading = !!(operationLoading[addKey] || operationLoading[removeKey]);
+
+  const addKey = user?.id ? `${user.id}-${novel.id}-add` : "";
+  const removeKey = user?.id ? `${user.id}-${novel.id}-remove` : "";
+  const isOperationLoading = !!(
+    operationLoading[addKey] || operationLoading[removeKey]
+  );
 
   // Loader global: cualquier operación o carga de favoritos
   const isLoading = isOperationLoading || favoritesLoading;
@@ -50,17 +60,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
     buttonClass = "bg-red-500 hover:bg-red-600 text-white";
   }
 
-  console.log(`🟨 RENDER Novel ${novel.id}:`, {
-    favoritesCount: favorites.length,
-    isFavorite,
-    isLoading,
-    buttonText,
-    favoriteItem: favoriteItem?.id
-  });
-
   const handleClick = async () => {
-    console.log(`🟨 CLICK Novel ${novel.id}:`, { isFavorite, isLoading });
-
     if (!isAuthenticated) {
       router.push("/login");
       return;
@@ -70,11 +70,9 @@ export default function CardNovel({ novel }: CardNovelProps) {
 
     try {
       if (isFavorite && favoriteItem) {
-        console.log(`🟨 REMOVING favorite ${favoriteItem.id}...`);
         await dispatch(removeFavoriteAsync(favoriteItem.id));
         toast.success("Eliminado de la estantería");
       } else {
-        console.log(`🟨 ADDING favorite for novel ${novel.id}...`);
         await dispatch(addFavoriteAsync(novel));
         toast.success("Añadido a la estantería");
       }
@@ -87,7 +85,10 @@ export default function CardNovel({ novel }: CardNovelProps) {
   return (
     <Card className="overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow">
       <div className="flex p-4 gap-4">
-        <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push(`/book/${novel.id}`)}>
+        <div
+          className="flex-shrink-0 cursor-pointer"
+          onClick={() => router.push(`/book/${novel.id}`)}
+        >
           <Image
             src={novel.image || "/placeholder.svg"}
             alt={novel.title || "Sin título"}
@@ -98,7 +99,10 @@ export default function CardNovel({ novel }: CardNovelProps) {
         </div>
 
         <div className="flex-grow space-y-2">
-          <h3 className="font-bold text-lg cursor-pointer" onClick={() => router.push(`/book/${novel.id}`)}>
+          <h3
+            className="font-bold text-lg cursor-pointer"
+            onClick={() => router.push(`/book/${novel.id}`)}
+          >
             {novel.title || "Sin título"}
           </h3>
           <div className="text-xs text-muted-foreground">
@@ -116,7 +120,7 @@ export default function CardNovel({ novel }: CardNovelProps) {
           >
             Haga clic para leer
           </Button>
-          
+
           {isAuthenticated ? (
             <Button
               variant="outline"

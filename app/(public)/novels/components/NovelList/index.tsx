@@ -36,33 +36,31 @@ interface NovelListProps {
 
 export default function NovelList({ novels: novelsProp }: NovelListProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { novels: storeNovels, loading, error } = useSelector((state: RootState) => state.novels);
+  const {
+    novels: storeNovels,
+    loading,
+    error,
+  } = useSelector((state: RootState) => state.novels);
 
   // Proteger contra undefined - usar novelas del prop o del store
-  const novels = Array.isArray(novelsProp) ? novelsProp : 
-                Array.isArray(storeNovels) ? storeNovels : [];
+  const novels = Array.isArray(novelsProp)
+    ? novelsProp
+    : Array.isArray(storeNovels)
+    ? storeNovels
+    : [];
 
   // Solo cargar novelas si es necesario - NO favoritos
   useEffect(() => {
     if (novels.length === 0 && !loading) {
-      console.log('📚 NovelList: Loading novels from store');
       dispatch(getNovelsAsync());
     }
   }, [dispatch, novels.length, loading]);
-
-  console.log(`📋 NovelList render:`, {
-    novelsProp: novelsProp?.length || 0,
-    storeNovels: storeNovels?.length || 0,
-    novels: novels.length,
-    loading,
-    error: !!error
-  });
 
   if (error) {
     return (
       <div className="text-center p-4 text-red-500">
         <p>Error: {error}</p>
-        <button 
+        <button
           onClick={() => dispatch(getNovelsAsync())}
           className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
@@ -87,7 +85,7 @@ export default function NovelList({ novels: novelsProp }: NovelListProps) {
       <div className="text-center p-4">
         <p>No se encontraron novelas.</p>
         {!loading && (
-          <button 
+          <button
             onClick={() => dispatch(getNovelsAsync())}
             className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
@@ -102,10 +100,10 @@ export default function NovelList({ novels: novelsProp }: NovelListProps) {
     <div className="w-full grid grid-cols-1 gap-4 p-4 place-content-center">
       {novels.map((novel) => {
         if (!novel || !novel.id) {
-          console.warn('⚠️ Invalid novel data:', novel);
+          console.warn("⚠️ Invalid novel data:", novel);
           return null;
         }
-        
+
         return (
           <Suspense key={novel.id} fallback={<CardNovelSkeleton />}>
             <CardNovel novel={novel} />

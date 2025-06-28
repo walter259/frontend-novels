@@ -53,8 +53,6 @@ export default function Navbar() {
     localUser &&
     ["Admin", "Moderator"].includes(localUser.role);
 
-  console.log(isAdminOrModerator);
-
   return (
     <Sidebar>
       <SidebarContent>

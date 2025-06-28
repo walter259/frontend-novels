@@ -58,32 +58,36 @@ const PageSkeleton = () => (
 export default function Novels() {
   const dispatch = useDispatch<AppDispatch>();
   const { novels, loading } = useSelector((state: RootState) => state.novels);
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const { hasInitialized: favoritesInitialized, loading: favoritesLoading } = useSelector((state: RootState) => state.favorites);
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const { hasInitialized: favoritesInitialized, loading: favoritesLoading } =
+    useSelector((state: RootState) => state.favorites);
 
   useEffect(() => {
     // Cargar novelas si aún no están cargadas
     if (novels.length === 0 && !loading) {
-      console.log('📚 Page: Loading novels');
       dispatch(getNovelsAsync());
     }
   }, [dispatch, novels.length, loading]);
 
   useEffect(() => {
     // ÚNICA carga de favoritos - solo desde aquí
-    if (isAuthenticated && user?.id && !favoritesInitialized && !favoritesLoading) {
-      console.log(`🚀 Page: Loading favorites for user ${user.id}`);
+    if (
+      isAuthenticated &&
+      user?.id &&
+      !favoritesInitialized &&
+      !favoritesLoading
+    ) {
       dispatch(getFavoritesAsync());
     }
-  }, [dispatch, isAuthenticated, user?.id, favoritesInitialized, favoritesLoading]);
-
-  console.log('📄 Novels page render:', {
-    novelsCount: novels.length,
-    loading,
+  }, [
+    dispatch,
     isAuthenticated,
+    user?.id,
     favoritesInitialized,
-    favoritesLoading
-  });
+    favoritesLoading,
+  ]);
 
   // Mostrar skeleton mientras se cargan las novelas iniciales
   if (loading && novels.length === 0) {
