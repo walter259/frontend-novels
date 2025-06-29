@@ -17,12 +17,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Save } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Wand2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createChapterAsync } from "@/service/chapter/chapterService";
 import { ChapterSchema } from "@/lib/validators/chapter";
+import { formatText } from "@/lib/utils/textFormatter";
 
 interface ChapterFormProps {
   novelId: string;
@@ -92,6 +93,17 @@ export default function ChapterForm({ novelId, novelTitle }: ChapterFormProps) {
     return "text-muted-foreground";
   };
 
+  const handleFormatText = () => {
+    const currentContent = form.getValues("content");
+    if (currentContent) {
+      const formattedContent = formatText(currentContent);
+      form.setValue("content", formattedContent);
+      toast.success("Texto formateado correctamente");
+    } else {
+      toast.warning("No hay contenido para formatear");
+    }
+  };
+
   return (
     <div className="container mx-auto max-w-4xl p-4">
       {/* Header */}
@@ -148,7 +160,20 @@ export default function ChapterForm({ novelId, novelTitle }: ChapterFormProps) {
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contenido del Capítulo *</FormLabel>
+                    <FormLabel className="flex items-center justify-between">
+                      Contenido del Capítulo *
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleFormatText}
+                        disabled={isSubmitting || !contentValue}
+                        className="ml-2"
+                      >
+                        <Wand2 className="h-4 w-4 mr-1" />
+                        Formatear
+                      </Button>
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Escribe el contenido del capítulo aquí..."
